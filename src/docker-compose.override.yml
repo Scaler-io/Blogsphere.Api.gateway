@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  gatewaydb:
+    container_name: gatewaydb
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=BlogsphereProxy
+    ports:
+      - "5432:5432"
+    volumes:
+      - gatewaydbdata:/var/lib/postgresql/data
+    networks:
+      - blogsphere_dev_net
+
+  gatewaydbviewer:
+    container_name: gatewaydbviewer
+    depends_on:
+      - gatewaydb
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@blogsphere.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    volumes:
+      - gatewaydbviewerdata:/root/.pgadmin
+    networks:
+      - blogsphere_dev_net
