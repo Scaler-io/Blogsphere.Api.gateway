@@ -1,5 +1,5 @@
-
 using Blogsphere.Api.Gateway.Services;
+using Blogsphere.Api.Gateway.Models.Common;
 
 namespace Blogsphere.Api.Gateway.Middlewares;
 
@@ -10,6 +10,14 @@ public class SubscriptionValidationMiddleware(ILogger logger, ISubscriptionServi
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
+        // Check if the endpoint has SkipSubscriptionValidationAttribute metadata
+        var endpoint = context.GetEndpoint();
+        if (endpoint?.Metadata?.GetMetadata<SkipSubscriptionValidationAttribute>() != null)
+        {
+            await next(context);
+            return;
+        }
+        // Check if the endpoint should skip validation
         var subscriptionKey = context.Request.Headers["ocp-apim-subscriptionkey"].FirstOrDefault();
         var apiPath = GetApiPath(context.Request.Path.Value);
 

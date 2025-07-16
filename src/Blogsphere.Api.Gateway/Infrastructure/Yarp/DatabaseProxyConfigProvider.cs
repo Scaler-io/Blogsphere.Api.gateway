@@ -1,10 +1,8 @@
 using Blogsphere.Api.Gateway.Data.Interfaces;
 using Blogsphere.Api.Gateway.Entity;
 using Blogsphere.Api.Gateway.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using System.Linq.Expressions;
-using Serilog;
 using Yarp.ReverseProxy.Configuration;
 
 namespace Blogsphere.Api.Gateway.Infrastructure.Yarp;
@@ -80,7 +78,7 @@ public class DatabaseProxyConfigProvider : IProxyConfigProvider
             }
 
             // Get all active routes with their cluster, transforms, and headers
-            var routeIncludes = new Expression<Func<ProxyRoute, object>>[] { r => r.Cluster, r => r.Transforms };
+            var routeIncludes = new Expression<Func<ProxyRoute, object>>[] { r => r.Cluster, r => r.Transforms, r => r.Headers };
             var routes = unitOfWork.Routes.GetAllAsync(routeIncludes).Result
                 .Where(r => r.IsActive && r.Cluster != null && r.Cluster.IsActive)
                 .Select(route =>
@@ -106,7 +104,17 @@ public class DatabaseProxyConfigProvider : IProxyConfigProvider
                         Match = new RouteMatch
                         {
                             Path = route.Path,
-                            Methods = route.Methods
+                            Methods = route.Methods,
+                            Headers = route.Headers?
+                                .Where(h => h.IsActive)
+                                .Select(h => new RouteHeader
+                                {
+                                    Name = h.Name,
+                                    Values = h.Values,
+                                    Mode = ParseHeaderMatchMode(h.Mode),
+                                    IsCaseSensitive = true
+                                })
+                                .ToList()
                         },
                         Transforms = route.Transforms?
                             .Where(t => t.IsActive)
@@ -158,6 +166,20 @@ public class DatabaseProxyConfigProvider : IProxyConfigProvider
             _logger.Here().Error(ex, "Error updating proxy configuration");
             throw;
         }
+    }
+
+    private static HeaderMatchMode ParseHeaderMatchMode(string mode)
+    {
+        return mode?.ToLowerInvariant() switch
+        {
+            "exactheader" => HeaderMatchMode.ExactHeader,
+            "headerprefix" => HeaderMatchMode.HeaderPrefix,
+            "exists" => HeaderMatchMode.Exists,
+            "contains" => HeaderMatchMode.Contains,
+            "notcontains" => HeaderMatchMode.NotContains,
+            "notexists" => HeaderMatchMode.NotExists,
+            _ => HeaderMatchMode.ExactHeader
+        };
     }
 }
 

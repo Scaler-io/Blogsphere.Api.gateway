@@ -2,7 +2,8 @@ using Blogsphere.Api.Gateway.Data.Interfaces;
 using Blogsphere.Api.Gateway.Data.Interfaces.Base;
 using Blogsphere.Api.Gateway.Entity;
 using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Infrastructure.Common;
+using Blogsphere.Api.Gateway.Models.Common;
+using Blogsphere.Api.Gateway.Models.Enums;
 using Blogsphere.Api.Gateway.Services.Interfaces.Base;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -18,165 +19,162 @@ public abstract class BaseService<T>(
     protected readonly IRepository<T> _repository = repository;
     protected readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-    public virtual async Task<T> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<T>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
+        _logger.Debug("Getting {EntityType} by ID {Id}", typeof(T).Name, id);
         
-        try
+        var entity = await _repository.GetByIdAsync(id, GetDefaultIncludes(), cancellationToken);
+        
+        if (entity == null || !entity.IsActive)
         {
-            var entity = await _repository.GetByIdAsync(id, GetDefaultIncludes(), cancellationToken);
-            
-            if (entity == null)
-            {
-                _logger.Warning("Entity with ID {Id} not found", id);
-                throw new InvalidOperationException($"Entity with ID {id} not found");
-            }
-            
-            _logger.Here().MethodExited(entity);
-            return entity;
+            _logger.Warning("Active {EntityType} with ID {Id} not found", typeof(T).Name, id);
+            return Result<T>.Failure(ErrorCodes.NotFound, $"Active {typeof(T).Name} with ID {id} not found");
         }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error getting entity by ID {Id}", id);
-            throw;
-        }
+        
+        _logger.Here().MethodExited(entity);
+        return Result<T>.Success(entity);
     }
 
-    public virtual async Task<PaginatedResult<T>> GetAllAsync(PaginationRequest request, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<PaginatedResult<T>>> GetAllAsync(PaginationRequest request, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
+        _logger.Debug("Getting all {EntityType} with pagination {Request}", typeof(T).Name, request);
         
-        try
+        var query = _repository.Include(GetDefaultIncludes());
+
+        // Apply active status filter if specified
+        if (request.IsActive.HasValue)
         {
-            var query = _repository.Include(GetDefaultIncludes());
-
-            // Apply search if provided
-            if (!string.IsNullOrEmpty(request.SearchTerm))
-            {
-                query = ApplySearch(query, request.SearchTerm);
-            }
-
-            // Apply sorting if provided
-            if (!string.IsNullOrEmpty(request.SortBy))
-            {
-                query = ApplySort(query, request.SortBy, request.IsDescending);
-            }
-
-            var totalCount = await query.CountAsync(cancellationToken);
-            
-            var items = await query
-                .Skip((request.PageNumber - 1) * request.PageSize)
-                .Take(request.PageSize)
-                .ToListAsync(cancellationToken);
-
-            var result = new PaginatedResult<T>(items, request.PageNumber, request.PageSize, totalCount);
-            _logger.Here().MethodExited(result);
-            return result;
+            query = query.Where(e => e.IsActive == request.IsActive.Value);
         }
-        catch (Exception ex)
+
+        // Apply search if provided
+        if (!string.IsNullOrEmpty(request.SearchTerm))
         {
-            _logger.Error(ex, "Error getting all entities with pagination");
-            throw;
+            query = ApplySearch(query, request.SearchTerm);
         }
+
+        // Apply sorting if provided
+        if (!string.IsNullOrEmpty(request.SortBy))
+        {
+            query = ApplySort(query, request.SortBy, request.IsDescending);
+        }
+        else
+        {
+            // Default sort by UpdatedAt descending if no sort specified
+            query = query.OrderByDescending(e => e.UpdatedAt);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        
+        // Validate and adjust pagination parameters
+        request.PageNumber = request.PageNumber < 1 ? 1 : request.PageNumber;
+        request.PageSize = request.PageSize switch
+        {
+            < 1 => 10,
+            > 50 => 50,
+            _ => request.PageSize
+        };
+        
+        var items = await query
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToListAsync(cancellationToken);
+
+        var result = new PaginatedResult<T>
+        {
+            Items = items,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalCount = totalCount
+        };
+        
+        _logger.Here().MethodExited(new { TotalCount = totalCount, PageCount = result.TotalPages });
+        return Result<PaginatedResult<T>>.Success(result);
     }
 
-    public virtual async Task<T> CreateAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<T>> CreateAsync(T entity, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
+        _logger.Debug("Creating new {EntityType}", typeof(T).Name);
         
-        try
-        {
-            entity.CreatedAt = DateTime.UtcNow;
-            entity.UpdatedAt = DateTime.UtcNow;
-            
-            await _repository.AddAsync(entity, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            
-            _logger.Information("Created entity with ID {Id}", entity.Id);
-            _logger.Here().MethodExited(entity);
-            return entity;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error creating entity");
-            throw;
-        }
+        entity.Id = entity.Id == Guid.Empty ? Guid.NewGuid() : entity.Id;
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.UpdatedAt = DateTime.UtcNow;
+        entity.IsActive = true;
+        
+        await _repository.AddAsync(entity, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        _logger.Information("Created {EntityType} with ID {Id}", typeof(T).Name, entity.Id);
+        _logger.Here().MethodExited(entity);
+        return Result<T>.Success(entity);
     }
 
-    public virtual async Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<T>> UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
+        _logger.Debug("Updating {EntityType} with ID {Id}", typeof(T).Name, entity.Id);
         
-        try
+        var existingEntity = await _repository.GetByIdAsync(entity.Id, cancellationToken);
+        
+        if (existingEntity == null)
         {
-            var existingEntity = await _repository.GetByIdAsync(entity.Id, cancellationToken);
-            
-            if (existingEntity == null)
-            {
-                _logger.Error("Entity with ID {Id} not found for update", entity.Id);
-                throw new InvalidOperationException($"Entity with ID {entity.Id} not found");
-            }
+            _logger.Error("{EntityType} with ID {Id} not found for update", typeof(T).Name, entity.Id);
+            return Result<T>.Failure(ErrorCodes.NotFound, $"{typeof(T).Name} with ID {entity.Id} not found");
+        }
 
-            entity.CreatedAt = existingEntity.CreatedAt;
-            entity.UpdatedAt = DateTime.UtcNow;
-            
-            _repository.Update(entity);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            
-            _logger.Information("Updated entity with ID {Id}", entity.Id);
-            _logger.Here().MethodExited(entity);
-            return entity;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error updating entity with ID {Id}", entity.Id);
-            throw;
-        }
+        // Preserve metadata
+        entity.CreatedAt = existingEntity.CreatedAt;
+        entity.IsActive = existingEntity.IsActive;
+        entity.UpdatedAt = DateTime.UtcNow;
+        
+        _repository.Update(entity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        _logger.Information("Updated {EntityType} with ID {Id}", typeof(T).Name, entity.Id);
+        _logger.Here().MethodExited(entity);
+        return Result<T>.Success(entity);
     }
 
-    public virtual async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<bool>> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
+        _logger.Debug("Deleting {EntityType} with ID {Id}", typeof(T).Name, id);
         
-        try
+        var entity = await _repository.GetByIdAsync(id, cancellationToken);
+        
+        if (entity == null)
         {
-            var entity = await _repository.GetByIdAsync(id, cancellationToken);
-            
-            if (entity == null)
-            {
-                _logger.Error("Entity with ID {Id} not found for deletion", id);
-                throw new InvalidOperationException($"Entity with ID {id} not found");
-            }
+            _logger.Error("{EntityType} with ID {Id} not found for deletion", typeof(T).Name, id);
+            return Result<bool>.Failure(ErrorCodes.NotFound, $"{typeof(T).Name} with ID {id} not found");
+        }
 
-            _repository.Remove(entity);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            
-            _logger.Information("Deleted entity with ID {Id}", id);
-            _logger.Here().MethodExited();
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error deleting entity with ID {Id}", id);
-            throw;
-        }
+        // Perform soft delete
+        entity.IsActive = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        
+        _repository.Update(entity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        _logger.Information("Soft deleted {EntityType} with ID {Id}", typeof(T).Name, id);
+        _logger.Here().MethodExited();
+        return Result<bool>.Success(true);
     }
 
     protected virtual IQueryable<T> ApplySearch(IQueryable<T> query, string searchTerm)
     {
-        // Base implementation returns unmodified query
-        // Override in derived classes to implement specific search logic
         return query;
     }
 
     protected virtual IQueryable<T> ApplySort(IQueryable<T> query, string sortBy, bool isDescending)
     {
-        // Base implementation returns unmodified query
-        // Override in derived classes to implement specific sorting logic
         return query;
     }
 
     protected virtual Expression<Func<T, object>>[] GetDefaultIncludes()
     {
-        return Array.Empty<Expression<Func<T, object>>>();
+        return [];
     }
 } 

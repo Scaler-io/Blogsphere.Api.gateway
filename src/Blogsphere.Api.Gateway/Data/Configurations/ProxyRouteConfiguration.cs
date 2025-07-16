@@ -42,12 +42,12 @@ public class ProxyRouteConfiguration : IEntityTypeConfiguration<ProxyRoute>
 
         builder.HasMany(x => x.Headers)
             .WithOne(x => x.Route)
-            .HasForeignKey(x => x.Id)
+            .HasForeignKey(x => x.RouteId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(x => x.Transforms)
             .WithOne(x => x.Route)
-            .HasForeignKey(x => x.Id)
+            .HasForeignKey(x => x.RouteId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => x.RouteId)

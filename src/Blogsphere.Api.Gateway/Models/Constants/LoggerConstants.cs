@@ -1,4 +1,4 @@
-namespace Blogsphere.Api.Gateway.Constants;
+namespace Blogsphere.Api.Gateway.Models.Constants;
 
 public class LoggerConstants
 {

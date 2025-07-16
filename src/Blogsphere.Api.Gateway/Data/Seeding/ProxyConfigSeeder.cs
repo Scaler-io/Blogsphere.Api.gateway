@@ -1,36 +1,29 @@
-using Blogsphere.Api.Gateway.Entity;
 using Blogsphere.Api.Gateway.Extensions;
+using Blogsphere.Api.Gateway.Models.DTOs;
 using Blogsphere.Api.Gateway.Services.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Serilog;
 
 namespace Blogsphere.Api.Gateway.Data.Seeding;
 
-public class ProxyConfigSeeder : IProxyConfigSeeder
+public class ProxyConfigSeeder(
+    IProxyClusterService clusterService,
+    IProxyRouteService routeService,
+    IConfiguration configuration,
+    ILogger logger) : IProxyConfigSeeder
 {
-    private readonly IProxyClusterService _clusterService;
-    private readonly IProxyRouteService _routeService;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger _logger;
-
-    public ProxyConfigSeeder(
-        IProxyClusterService clusterService,
-        IProxyRouteService routeService,
-        IConfiguration configuration,
-        ILogger logger)
-    {
-        _clusterService = clusterService;
-        _routeService = routeService;
-        _configuration = configuration;
-        _logger = logger;
-    }
+    private readonly IProxyClusterService _clusterService = clusterService;
+    private readonly IProxyRouteService _routeService = routeService;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly ILogger _logger = logger;
 
     public async Task SeedAsync()
     {
         _logger.Here().MethodEntered();
         try
         {
-            if (await _clusterService.AnyAsync() || await _routeService.AnyAsync())
+            var hasCluster = await _clusterService.AnyAsync();
+            var hasRoute = await _routeService.AnyAsync();
+            
+            if (hasCluster.IsSuccess && hasCluster.Value || hasRoute.IsSuccess && hasRoute.Value)
             {
                 _logger.Here().Information("Database already contains proxy configuration data. Skipping seeding.");
                 _logger.Here().MethodExited();
@@ -52,9 +45,8 @@ public class ProxyConfigSeeder : IProxyConfigSeeder
                 var healthCheck = clusterConfig.GetSection("HealthCheck");
                 var healthCheckEnabled = healthCheck?.GetValue<bool>("Active:Enabled") ?? true;
                 
-                var cluster = new ProxyCluster
+                var clusterDto = new ProxyClusterDto
                 {
-                    Id = Guid.NewGuid(),
                     ClusterId = clusterId,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
@@ -62,7 +54,8 @@ public class ProxyConfigSeeder : IProxyConfigSeeder
                     HealthCheckEnabled = healthCheckEnabled,
                     HealthCheckPath = healthCheck?.GetValue<string>("Active:Path") ?? "/healthcheck",
                     HealthCheckInterval = healthCheck?.GetValue<int>("Active:Interval") ?? 30,
-                    HealthCheckTimeout = healthCheck?.GetValue<int>("Active:Timeout") ?? 10
+                    HealthCheckTimeout = healthCheck?.GetValue<int>("Active:Timeout") ?? 10,
+                    Destinations = []
                 };
 
                 var destinations = clusterConfig.GetSection("Destinations").GetChildren();
@@ -81,36 +74,43 @@ public class ProxyConfigSeeder : IProxyConfigSeeder
                     _logger.Here().Information("Adding destination {DestinationId} with address {Address} to cluster {ClusterId}", 
                         destinationId, address, clusterId);
 
-                    var destination = new ProxyDestination
+                    var destinationDto = new ProxyDestinationDto
                     {
                         Id = Guid.NewGuid(),
                         DestinationId = destinationId,
                         Address = address,
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
-                        ClusterId = cluster.Id
+                        ClusterId = clusterDto.Id
                     };
-                    cluster.Destinations.Add(destination);
+                    clusterDto.Destinations.Add(destinationDto);
                 }
 
-                if (!cluster.Destinations.Any())
+                if (!clusterDto.Destinations.Any())
                 {
                     _logger.Here().Warning("Cluster {ClusterId} has no valid destinations, adding default localhost destination", clusterId);
-                    var defaultDestination = new ProxyDestination
+                    var defaultDestinationDto = new ProxyDestinationDto
                     {
                         Id = Guid.NewGuid(),
                         DestinationId = "default",
                         Address = "http://localhost:8001",
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
-                        ClusterId = cluster.Id
+                        ClusterId = clusterDto.Id
                     };
-                    cluster.Destinations.Add(defaultDestination);
+                    clusterDto.Destinations.Add(defaultDestinationDto);
                 }
 
-                await _clusterService.CreateAsync(cluster);
+                var createdCluster = await _clusterService.CreateAsync(clusterDto);
+                if (!createdCluster.IsSuccess)
+                {
+                    _logger.Here().Error("Failed to create cluster {ClusterId}: {ErrorMessage}", 
+                        clusterId, createdCluster.ErrorMessage);
+                    continue;
+                }
+
                 _logger.Here().Information("Successfully created cluster {ClusterId} with {DestinationCount} destinations", 
-                    clusterId, cluster.Destinations.Count);
+                    clusterId, clusterDto.Destinations.Count);
             }
 
             _logger.Here().Information("Starting to seed routes from configuration");
@@ -129,13 +129,14 @@ public class ProxyConfigSeeder : IProxyConfigSeeder
 
                 _logger.Here().Information("Creating route {RouteId} for cluster {ClusterId}", routeId, clusterId);
 
-                var cluster = await _clusterService.GetByClusterIdAsync(clusterId);
+                var clusterResult = await _clusterService.GetByClusterIdAsync(clusterId);
+                var cluster = clusterResult.IsSuccess ? clusterResult.Value : null;
 
                 if (cluster == null)
                 {
                     _logger.Here().Warning("Cluster {ClusterId} not found for route {RouteId}, creating default cluster", clusterId, routeId);
                     
-                    cluster = new ProxyCluster
+                    var defaultClusterDto = new ProxyClusterDto
                     {
                         Id = Guid.NewGuid(),
                         ClusterId = clusterId,
@@ -158,17 +159,24 @@ public class ProxyConfigSeeder : IProxyConfigSeeder
                             }
                         ]
                     };
-                    cluster.Destinations.First().ClusterId = cluster.Id;
-                    await _clusterService.CreateAsync(cluster);
+                    defaultClusterDto.Destinations.First().ClusterId = defaultClusterDto.Id;
+                    var defaultClusterResult = await _clusterService.CreateAsync(defaultClusterDto);
+                    if (!defaultClusterResult.IsSuccess)
+                    {
+                        _logger.Here().Error("Failed to create default cluster {ClusterId}: {ErrorMessage}", 
+                            clusterId, defaultClusterResult.ErrorMessage);
+                        continue;
+                    }
+                    cluster = defaultClusterResult.Value;
                 }
 
-                var route = new ProxyRoute
+                var routeDto = new ProxyRouteDto
                 {
                     Id = Guid.NewGuid(),
                     RouteId = routeId,
                     ClusterId = cluster.Id,
                     Path = routeConfig.GetValue<string>("Match:Path"),
-                    Methods = routeConfig.GetSection("Match:Method").Get<string[]>() ?? new[] { "GET" },
+                    Methods = routeConfig.GetSection("Match:Method").Get<string[]>() ?? ["GET"],
                     RateLimiterPolicy = routeConfig.GetValue<string>("RateLimiterPolicy"),
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
@@ -188,17 +196,14 @@ public class ProxyConfigSeeder : IProxyConfigSeeder
 
                     _logger.Here().Information("Adding header {HeaderName} to route {RouteId}", headerName, routeId);
 
-                    var header = new ProxyHeader
+                    var header = new ProxyHeaderDto
                     {
                         Id = Guid.NewGuid(),
                         Name = headerName,
                         Values = headerConfig.GetSection("Values").Get<string[]>() ?? Array.Empty<string>(),
-                        Mode = headerConfig.GetValue<string>("Mode") ?? "ExactHeader",
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
-                        RouteId = route.Id
+                        Mode = headerConfig.GetValue<string>("Mode") ?? "ExactHeader"
                     };
-                    route.Headers.Add(header);
+                    routeDto.Headers.Add(header);
                 }
 
                 // Add transforms if specified
@@ -214,20 +219,24 @@ public class ProxyConfigSeeder : IProxyConfigSeeder
                     _logger.Here().Information("Adding transform with pattern {PathPattern} to route {RouteId}", 
                         pathPattern, routeId);
 
-                    var transform = new ProxyTransform
+                    var transform = new ProxyTransformDto
                     {
                         Id = Guid.NewGuid(),
-                        PathPattern = pathPattern,
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
-                        RouteId = route.Id
+                        PathPattern = pathPattern
                     };
-                    route.Transforms.Add(transform);
+                    routeDto.Transforms.Add(transform);
                 }
 
-                await _routeService.CreateAsync(route);
+                var createdRoute = await _routeService.CreateAsync(routeDto);
+                if (!createdRoute.IsSuccess)
+                {
+                    _logger.Here().Error("Failed to create route {RouteId}: {ErrorMessage}", 
+                        routeId, createdRoute.ErrorMessage);
+                    continue;
+                }
+
                 _logger.Here().Information("Successfully created route {RouteId} with {HeaderCount} headers and {TransformCount} transforms", 
-                    routeId, route.Headers.Count, route.Transforms.Count);
+                    routeId, routeDto.Headers.Count, routeDto.Transforms.Count);
             }
 
             _logger.Here().Information("Successfully completed seeding proxy configuration data");

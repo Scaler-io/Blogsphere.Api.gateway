@@ -27,7 +27,7 @@ public class ProxyHeaderConfiguration : IEntityTypeConfiguration<ProxyHeader>
 
         builder.HasOne(x => x.Route)
             .WithMany(x => x.Headers)
-            .HasForeignKey("RouteId")
+            .HasForeignKey(x => x.RouteId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 } 

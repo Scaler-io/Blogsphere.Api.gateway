@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using Blogsphere.Api.Gateway.Constants;
+using Blogsphere.Api.Gateway.Models.Constants;
 
 namespace Blogsphere.Api.Gateway.Extensions;
 
@@ -19,7 +19,7 @@ public static class LoggerExtensions
         logger.Debug(LoggerConstants.MethodEntered);
     }
 
-    public static void MethodExited(this ILogger logger, object? withResult = null)
+    public static void MethodExited(this ILogger logger, object withResult = null)
     {
         logger.Debug(LoggerConstants.MethodExited);
         if (withResult is not null)
