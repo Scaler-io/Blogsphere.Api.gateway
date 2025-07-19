@@ -57,18 +57,18 @@ stages:
               repositoryName: $(repositoryName)
 
   - stage: DockerBuildAndPush
-  displayName: "Docker Build and Push"
-  dependsOn:
-    - GithubRelease
-  condition: and(succeeded(), notIn(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-  variables:
-    RELEASE_TAG: $[ stageDependencies.GithubRelease.GithubRelease.outputs['setReleaseTag.RELEASE_TAG'] ]
-  jobs:
-    - job: DockerBuildAndPush
-      displayName: "Docker Build and Push Job"
-      steps:
-        - template: ./deploy/docker-build.yml
-          parameters:
-            imageName: $(imageName)
-            tag: $(RELEASE_TAG)
-            containerRegistry: $(containerRegistry)
+    displayName: "Docker Build and Push"
+    dependsOn:
+      - GithubRelease
+    condition: and(succeeded(), notIn(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      RELEASE_TAG: $[ stageDependencies.GithubRelease.GithubRelease.outputs['setReleaseTag.RELEASE_TAG'] ]
+    jobs:
+      - job: DockerBuildAndPush
+        displayName: "Docker Build and Push Job"
+        steps:
+          - template: ./deploy/docker-build.yml
+            parameters:
+              imageName: $(imageName)
+              tag: $(RELEASE_TAG)
+              containerRegistry: $(containerRegistry)
