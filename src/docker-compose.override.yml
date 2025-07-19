@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   blogsphere.api.gateway:
-    container_name: blogsphere.api.gateway
+    container_name: Blogsphere.Api.Gateway
     depends_on:
       - gatewaydb
     ports:
