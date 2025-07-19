@@ -1,34 +1,74 @@
-# ASP.NET
-# Build and test ASP.NET projects.
-# Add steps that publish symbols, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
-
 trigger:
-- main
+  batch: true
+  branches:
+    include:
+      - main
+      - feature/**
+      - hotfix/**
+
+pr:
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: "ubuntu-latest"
 
 variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  - group: Blogsphere.Api.Gateway.Group
 
-steps:
-- task: NuGetToolInstaller@1
+stages:
+  - stage: Build
+    displayName: "Build Api Gateway"
+    jobs:
+      - job: build
+        displayName: "Build Job"
+        steps:
+          - template: ./build/build.yml
+            parameters:
+              projects: $(projects)
+              buildPlatform: $(buildPlatform)
+              buildConfiguration: $(buildConfiguration)
+              dotnetVersion: $(dotnetVersion)
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+  - stage: CodeAnalysis
+    displayName: "Code Analysis"
+    dependsOn:
+      - build
+    jobs:
+      - job: analysis
+        displayName: "Code Analysis Job"
+        steps:
+          - template: ./analysis/code-analysis.yml
+            parameters:
+              projects: $(projects)
+              buildConfiguration: $(buildConfiguration)
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+  # - stage: GithubRelease
+  #   displayName: "Github Release"
+  #   condition: and(succeeded(), notIn(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  #   jobs:
+  #     - job: GithubRelease
+  #       displayName: "Github Release Job"
+  #       steps:
+  #         - template: ./deploy/github-release.yml
+  #           parameters:
+  #             githubConnection: $(githubConnection)
+  #             repositoryName: $(repositoryName)
 
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+  # - stage: DockerBuildAndPush
+    displayName: "Docker Build and Push"
+    dependsOn:
+      - GithubRelease
+    condition: and(succeeded(), notIn(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      RELEASE_TAG: $[ stageDependencies.GithubRelease.GithubRelease.outputs['setReleaseTag.RELEASE_TAG'] ]
+    jobs:
+      - job: DockerBuildAndPush
+        displayName: "Docker Build and Push Job"
+        steps:
+          - template: ./deploy/docker-build.yml
+            parameters:
+              imageName: $(imageName)
+              tag: $(RELEASE_TAG)
+              containerRegistry: $(containerRegistry)
