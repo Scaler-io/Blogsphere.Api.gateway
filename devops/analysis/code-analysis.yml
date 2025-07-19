@@ -18,8 +18,8 @@ steps:
 
         # Look for the project file in various possible locations
         $possiblePaths = @(
-          "src/Blogsphere.Api.gateway",
-          "Blogsphere.Api.gateway",
+          "src/Blogsphere.Api.Gateway",
+          "Blogsphere.Api.Gateway",
           ".",
           "build-output"
         )
@@ -70,8 +70,8 @@ steps:
 
         # Look for the project file in various possible locations
         $possiblePaths = @(
-          "src/Blogsphere.Api.gateway",
-          "Blogsphere.Api.gateway",
+          "src/Blogsphere.Api.Gateway",
+          "Blogsphere.Api.Gateway",
           ".",
           "build-output"
         )
@@ -154,8 +154,8 @@ steps:
 
         # Look for the project file in various possible locations
         $possiblePaths = @(
-          "src/Blogsphere.Api.gateway",
-          "Blogsphere.Api.gateway",
+          "src/Blogsphere.Api.Gateway",
+          "Blogsphere.Api.Gateway",
           ".",
           "build-output"
         )
@@ -219,11 +219,11 @@ steps:
       targetType: "inline"
       script: |
         Write-Host "📊 Generating analysis report..."
-        
+
         # Create CSV report
         $reportPath = "$(Build.ArtifactStagingDirectory)/code-analysis-report.csv"
         $reportData = @()
-        
+
         # Add dependency analysis data
         $reportData += [PSCustomObject]@{
           Category = "Dependencies"
@@ -231,7 +231,7 @@ steps:
           Value = "See console output for details"
           Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         }
-        
+
         # Add code metrics data
         $csFiles = Get-ChildItem -Path "src" -Filter "*.cs" -Recurse -ErrorAction SilentlyContinue
         $totalLines = 0
@@ -241,21 +241,21 @@ steps:
             $totalLines += $lines.Lines
           }
         }
-        
+
         $reportData += [PSCustomObject]@{
           Category = "Code Metrics"
           Metric = "Total Lines of Code"
           Value = $totalLines
           Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         }
-        
+
         $reportData += [PSCustomObject]@{
           Category = "Code Metrics"
           Metric = "Total C# Files"
           Value = $csFiles.Count
           Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         }
-        
+
         # Export to CSV
         $reportData | Export-Csv -Path $reportPath -NoTypeInformation
         Write-Host "✅ Analysis report generated: $reportPath"
