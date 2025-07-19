@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Blogsphere.Api.Gateway.Extensions;
 using Blogsphere.Api.Gateway.Infrastructure.Yarp;
 using Blogsphere.Api.Gateway.Models.Common;
+using Blogsphere.Api.Gateway.Services.Interfaces;
 using Blogsphere.Api.Gateway.Swagger;
 using Blogsphere.Api.Gateway.Swagger.Examples;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,8 @@ namespace Blogsphere.Api.Gateway.Controllers.v1;
 [SkipSubscriptionValidation]
 public class ProxyConfigurationController(
     DatabaseProxyConfigProvider configProvider,
-    ILogger logger) : BaseApiController(logger)
+    ILogger logger,
+    IIdentityService identityService) : BaseApiController(logger, identityService)
 {
     private readonly DatabaseProxyConfigProvider _configProvider = configProvider;
     private readonly ILogger _logger = logger;

@@ -101,7 +101,7 @@ public class ProxyConfigSeeder(
                     clusterDto.Destinations.Add(defaultDestinationDto);
                 }
 
-                var createdCluster = await _clusterService.CreateAsync(clusterDto);
+                var createdCluster = await _clusterService.CreateAsync(clusterDto, null);
                 if (!createdCluster.IsSuccess)
                 {
                     _logger.Here().Error("Failed to create cluster {ClusterId}: {ErrorMessage}", 
@@ -160,7 +160,7 @@ public class ProxyConfigSeeder(
                         ]
                     };
                     defaultClusterDto.Destinations.First().ClusterId = defaultClusterDto.Id;
-                    var defaultClusterResult = await _clusterService.CreateAsync(defaultClusterDto);
+                    var defaultClusterResult = await _clusterService.CreateAsync(defaultClusterDto, null);
                     if (!defaultClusterResult.IsSuccess)
                     {
                         _logger.Here().Error("Failed to create default cluster {ClusterId}: {ErrorMessage}", 
@@ -227,7 +227,7 @@ public class ProxyConfigSeeder(
                     routeDto.Transforms.Add(transform);
                 }
 
-                var createdRoute = await _routeService.CreateAsync(routeDto);
+                var createdRoute = await _routeService.CreateAsync(routeDto, null);
                 if (!createdRoute.IsSuccess)
                 {
                     _logger.Here().Error("Failed to create route {RouteId}: {ErrorMessage}", 

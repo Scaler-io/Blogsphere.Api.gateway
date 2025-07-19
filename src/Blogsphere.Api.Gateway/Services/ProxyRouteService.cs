@@ -71,7 +71,7 @@ public class ProxyRouteService(
         return Result<ProxyRouteDto>.Success(dto);
     }
 
-    public async Task<Result<ProxyRouteDto>> CreateAsync(ProxyRouteDto dto)
+    public async Task<Result<ProxyRouteDto>> CreateAsync(ProxyRouteDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -92,6 +92,13 @@ public class ProxyRouteService(
         entity.CreatedAt = DateTime.UtcNow;
         entity.UpdatedAt = DateTime.UtcNow;
         
+        // Set audit fields from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.CreatedBy = requestInfo.CurrentUser.Id;
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
+        
         await _repository.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
         
@@ -101,7 +108,7 @@ public class ProxyRouteService(
         return Result<ProxyRouteDto>.Success(resultDto);
     }
 
-    public async Task<Result<ProxyRouteDto>> UpdateAsync(Guid id, ProxyRouteDto dto)
+    public async Task<Result<ProxyRouteDto>> UpdateAsync(Guid id, ProxyRouteDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -127,18 +134,18 @@ public class ProxyRouteService(
         }
 
         // Update main route properties using direct SQL approach
-        await UpdateRoutePropertiesAsync(id, dto);
+        await UpdateRoutePropertiesAsync(id, dto, requestInfo);
 
         // Handle headers update separately if provided
         if (dto.Headers != null)
         {
-            await UpdateRouteHeadersAsync(id, dto.Headers);
+            await UpdateRouteHeadersAsync(id, dto.Headers, requestInfo);
         }
 
         // Handle transforms update separately if provided
         if (dto.Transforms != null)
         {
-            await UpdateRouteTransformsAsync(id, dto.Transforms);
+            await UpdateRouteTransformsAsync(id, dto.Transforms, requestInfo);
         }
         
         // Get updated entity to return
@@ -154,7 +161,7 @@ public class ProxyRouteService(
         return Result<ProxyRouteDto>.Success(resultDto);
     }
 
-    public async Task<Result<ProxyRouteDto>> CreateFromRequestAsync(CreateProxyRouteRequest request)
+    public async Task<Result<ProxyRouteDto>> CreateFromRequestAsync(CreateProxyRouteRequest request, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -188,12 +195,12 @@ public class ProxyRouteService(
         }
 
         // Use the existing CreateAsync method
-        var result = await CreateAsync(dto);
+        var result = await CreateAsync(dto, requestInfo);
         _logger.Here().MethodExited();
         return result;
     }
 
-    public async Task<Result<ProxyRouteDto>> UpdateFromRequestAsync(Guid id, UpdateProxyRouteRequest request)
+    public async Task<Result<ProxyRouteDto>> UpdateFromRequestAsync(Guid id, UpdateProxyRouteRequest request, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -219,12 +226,12 @@ public class ProxyRouteService(
         // Handle explicit removals first
         if (request.RemoveHeaders != null && request.RemoveHeaders.Any())
         {
-            await RemoveRouteHeadersAsync(id, request.RemoveHeaders);
+            await RemoveRouteHeadersAsync(id, request.RemoveHeaders, requestInfo);
         }
 
         if (request.RemoveTransforms != null && request.RemoveTransforms.Any())
         {
-            await RemoveRouteTransformsAsync(id, request.RemoveTransforms);
+            await RemoveRouteTransformsAsync(id, request.RemoveTransforms, requestInfo);
         }
 
         // Map headers if provided
@@ -240,10 +247,10 @@ public class ProxyRouteService(
         }
 
         // Use the smart update logic
-        return await UpdateAsync(id, dto);
+        return await UpdateAsync(id, dto, requestInfo);
     }
 
-    private async Task UpdateRoutePropertiesAsync(Guid id, ProxyRouteDto dto)
+    private async Task UpdateRoutePropertiesAsync(Guid id, ProxyRouteDto dto, RequestInformation requestInfo)
     {
         // Load only the route entity for updating basic properties
         var entity = await _repository.AsQueryable()
@@ -260,12 +267,18 @@ public class ProxyRouteService(
         if (dto.Metadata != null) entity.Metadata = dto.Metadata;
         if (dto.ClusterId != Guid.Empty) entity.ClusterId = dto.ClusterId;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set UpdatedBy from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
 
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private async Task UpdateRouteHeadersAsync(Guid routeId, ICollection<ProxyHeaderDto> newHeaders)
+    private async Task UpdateRouteHeadersAsync(Guid routeId, ICollection<ProxyHeaderDto> newHeaders, RequestInformation requestInfo)
     {
         // Get existing headers for this route
         var existingHeaders = await _unitOfWork.Headers.AsQueryable()
@@ -283,6 +296,13 @@ public class ProxyRouteService(
                 existingHeader.Mode = headerDto.Mode ?? existingHeader.Mode;
                 existingHeader.IsActive = true;
                 existingHeader.UpdatedAt = DateTime.UtcNow;
+                
+                // Set UpdatedBy from RequestInformation
+                if (requestInfo?.CurrentUser?.Id != null)
+                {
+                    existingHeader.UpdatedBy = requestInfo.CurrentUser.Id;
+                }
+                
                 _unitOfWork.Headers.Update(existingHeader);
             }
             else
@@ -299,6 +319,14 @@ public class ProxyRouteService(
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
+                
+                // Set audit fields from RequestInformation
+                if (requestInfo?.CurrentUser?.Id != null)
+                {
+                    newHeader.CreatedBy = requestInfo.CurrentUser.Id;
+                    newHeader.UpdatedBy = requestInfo.CurrentUser.Id;
+                }
+                
                 await _unitOfWork.Headers.AddAsync(newHeader);
             }
         }
@@ -315,7 +343,7 @@ public class ProxyRouteService(
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private async Task UpdateRouteTransformsAsync(Guid routeId, ICollection<ProxyTransformDto> newTransforms)
+    private async Task UpdateRouteTransformsAsync(Guid routeId, ICollection<ProxyTransformDto> newTransforms, RequestInformation requestInfo)
     {
         // Get existing transforms for this route
         var existingTransforms = await _unitOfWork.Transforms.AsQueryable()
@@ -331,6 +359,13 @@ public class ProxyRouteService(
                 // Update existing transform
                 existingTransform.IsActive = true;
                 existingTransform.UpdatedAt = DateTime.UtcNow;
+                
+                // Set UpdatedBy from RequestInformation
+                if (requestInfo?.CurrentUser?.Id != null)
+                {
+                    existingTransform.UpdatedBy = requestInfo.CurrentUser.Id;
+                }
+                
                 _unitOfWork.Transforms.Update(existingTransform);
             }
             else
@@ -345,6 +380,14 @@ public class ProxyRouteService(
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
+                
+                // Set audit fields from RequestInformation
+                if (requestInfo?.CurrentUser?.Id != null)
+                {
+                    newTransform.CreatedBy = requestInfo.CurrentUser.Id;
+                    newTransform.UpdatedBy = requestInfo.CurrentUser.Id;
+                }
+                
                 await _unitOfWork.Transforms.AddAsync(newTransform);
             }
         }
@@ -361,7 +404,7 @@ public class ProxyRouteService(
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private async Task RemoveRouteHeadersAsync(Guid routeId, ICollection<string> headerNamesToRemove)
+    private async Task RemoveRouteHeadersAsync(Guid routeId, ICollection<string> headerNamesToRemove, RequestInformation requestInfo)
     {
         var headersToRemove = await _unitOfWork.Headers.AsQueryable()
             .Where(h => h.RouteId == routeId && headerNamesToRemove.Contains(h.Name))
@@ -375,7 +418,7 @@ public class ProxyRouteService(
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private async Task RemoveRouteTransformsAsync(Guid routeId, ICollection<string> transformPatternsToRemove)
+    private async Task RemoveRouteTransformsAsync(Guid routeId, ICollection<string> transformPatternsToRemove, RequestInformation requestInfo)
     {
         var transformsToRemove = await _unitOfWork.Transforms.AsQueryable()
             .Where(t => t.RouteId == routeId && transformPatternsToRemove.Contains(t.PathPattern))
@@ -389,7 +432,7 @@ public class ProxyRouteService(
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task<Result<bool>> DeleteAsync(Guid id)
+    public async Task<Result<bool>> DeleteAsync(Guid id, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         var entity = await _repository.GetByIdAsync(id);
@@ -401,6 +444,12 @@ public class ProxyRouteService(
 
         entity.IsActive = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set UpdatedBy from RequestInformation for delete operation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
         
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync();

@@ -2,6 +2,7 @@ using System.Net;
 using Blogsphere.Api.Gateway.Extensions;
 using Blogsphere.Api.Gateway.Models.Common;
 using Blogsphere.Api.Gateway.Models.Enums;
+using Blogsphere.Api.Gateway.Services.Interfaces;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,13 +10,16 @@ namespace Blogsphere.Api.Gateway.Controllers;
 
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class BaseApiController(ILogger logger) : ControllerBase
+public class BaseApiController(ILogger logger, IIdentityService identityService) : ControllerBase
 {
     private ILogger Logger { get; set; } = logger;
+    private readonly IIdentityService _identityService = identityService;
     protected RequestInformation RequestInformation => new()
     {
+        CurrentUser = _identityService.PrepareUser(),
         CorrelationId = GetOrGenerateCorelationId()
     };
+    
     protected string GetOrGenerateCorelationId() => Request?.GetRequestHeaderOrdefault("CorrelationId", $"GEN-{Guid.NewGuid().ToString()}");
 
     protected IActionResult OkOrFailure<T>(Result<T> result, HttpStatusCode? successCode)

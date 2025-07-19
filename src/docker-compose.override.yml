@@ -1,6 +1,33 @@
 version: "3.8"
 
 services:
+  blogsphere.api.gateway:
+    container_name: blogsphere.api.gateway
+    depends_on:
+      - gatewaydb
+    ports:
+      - "8000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - Logging__IncludeScopes=false
+      - "Logging__LogOutputTemplate=[{Timestamp:dd-MM-yyyy HH:mm:ss, fff}] {Level} {Properties} [CorrelationId:{CorrelationId}] [Machine: {MachineName}] {CallerType}:{MemberName} {Message}{NewLine}{Exception}{NewLine}"
+      - Logging__Console__Enabled=true
+      - Logging__Console__LogLevel=Debug
+      - Logging__Elastic__Enabled=true
+      - Logging__Elastic__LogLevel=Debug
+      - AppConfigurations__ApplicationIdentifier=Blogsphere.Api.Gateway
+      - AppConfigurations__ApplicationEnvironment=docker
+      - ElasticSearch__Uri=http://elasticsearch:9200
+      - "ConnectionStrings__DefaultConnection=Server=gatewaydb;Database=BlogsphereProxy;Username=admin;Password=admin"
+      - "Zipkin__Url=http://zipkin:9411/api/v2/spans"
+      - "ApiDescription=Proxy API Gateway"
+      - "ApiOriginHost=localhost:8000"
+      - "IdentityGroupAccess__Authority=http://host.docker.internal:5000"
+      - "IdentityGroupAccess__Audience=blogsphere.api.gateway"
+      - "AllowedHosts=*"
+    networks:
+      - blogsphere_dev_net
+
   gatewaydb:
     container_name: gatewaydb
     restart: always

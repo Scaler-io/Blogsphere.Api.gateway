@@ -1,7 +1,6 @@
 using System.Net;
 using Asp.Versioning;
 using AutoMapper;
-using Blogsphere.Api.Gateway.Entity;
 using Blogsphere.Api.Gateway.Extensions;
 using Blogsphere.Api.Gateway.Infrastructure.Yarp;
 using Blogsphere.Api.Gateway.Models.Common;
@@ -15,6 +14,8 @@ using Swashbuckle.AspNetCore.Filters;
 using System.ComponentModel.DataAnnotations;
 using Blogsphere.Api.Gateway.Swagger;
 using Microsoft.AspNetCore.Authorization;
+using Blogsphere.Api.Gateway.Filters;
+using Blogsphere.Api.Gateway.Models.Enums;
 
 namespace Blogsphere.Api.Gateway.Controllers.v1;
 
@@ -25,7 +26,8 @@ public class ProxyClusterController(
     IProxyClusterService clusterService,
     DatabaseProxyConfigProvider configProvider,
     ILogger logger,
-    IMapper mapper) : BaseApiController(logger)
+    IIdentityService identityService,
+    IMapper mapper) : BaseApiController(logger, identityService)
 {
     private readonly IProxyClusterService _clusterService = clusterService;
     private readonly DatabaseProxyConfigProvider _configProvider = configProvider;
@@ -41,6 +43,7 @@ public class ProxyClusterController(
     [ProducesResponseType(typeof(PaginatedResult<ProxyClusterDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
+    [RequirePermission(ApiAccess.CanViewSystemSettings)]
     public async Task<IActionResult> GetClusters(
         [FromQuery, Range(1, int.MaxValue), SwaggerParameter("Page number for pagination")] int pageNumber = 1,
         [FromQuery, Range(1, 100), SwaggerParameter("Number of items per page")] int pageSize = 10)
@@ -61,6 +64,7 @@ public class ProxyClusterController(
     [ProducesResponseType(typeof(ProxyClusterDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
+    [RequirePermission(ApiAccess.CanViewSystemSettings)]
     public async Task<IActionResult> GetCluster(
         [FromRoute, SwaggerParameter("The unique identifier of the cluster")] Guid id)
     {
@@ -80,12 +84,13 @@ public class ProxyClusterController(
     [ProducesResponseType(typeof(ProxyClusterDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
+    [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> CreateCluster(
         [FromBody, SwaggerRequestBody("The cluster creation request")] CreateProxyClusterRequest request)
     {
         _logger.Here().MethodEntered();
         
-        var result = await _clusterService.CreateFromRequestAsync(request);
+        var result = await _clusterService.CreateFromRequestAsync(request, RequestInformation);
         
         if (result.IsSuccess)
         {
@@ -108,13 +113,14 @@ public class ProxyClusterController(
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
+    [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> UpdateCluster(
         [FromRoute, SwaggerParameter("The unique identifier of the cluster to update")] Guid id,
         [FromBody, SwaggerRequestBody("The cluster update request")] UpdateProxyClusterRequest request)
     {
         _logger.Here().MethodEntered();
         
-        var result = await _clusterService.UpdateFromRequestAsync(id, request);
+        var result = await _clusterService.UpdateFromRequestAsync(id, request, RequestInformation);
         
         if (result.IsSuccess)
         {
@@ -133,11 +139,12 @@ public class ProxyClusterController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
+    [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> DeleteCluster(
         [FromRoute, SwaggerParameter("The unique identifier of the cluster to delete")] Guid id)
     {
         _logger.Here().MethodEntered();
-        var result = await _clusterService.DeleteAsync(id);
+        var result = await _clusterService.DeleteAsync(id, RequestInformation);
         
         if (result.IsSuccess)
         {

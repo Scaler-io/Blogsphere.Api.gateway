@@ -14,7 +14,6 @@
     <PackageReference Include="AutoMapper.Collection" Version="9.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="Destructurama.Attributed" Version="3.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.5.25277.114" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
@@ -44,15 +43,47 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="appsettings.Development.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Update="appsettings.Docker.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="System.IO" />
+    <Using Include="System.Text" />
+    <Using Include="System.Text.Json" />
+    <Using Include="System.Text.Json.Serialization" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+    <Using Include="Microsoft.Extensions.Configuration" />  
+    <Using Include="Serilog" />
+    <Using Include="Serilog.Events" />
+    <Using Include="Serilog.Sinks.File" />
+    <Using Include="Serilog.Sinks.Elasticsearch" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Serilog.ILogger">
+    <Alias>ILogger</Alias>
+  </Using>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Authors>Your Company Name</Authors>
+    <Company>Your Company Name</Company>
+    <Copyright>Copyright © $([System.DateTime]::Now.Year)</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/yourusername/Blogsphere</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/yourusername/Blogsphere</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
 
 </Project>

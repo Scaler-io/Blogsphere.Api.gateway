@@ -62,12 +62,19 @@ public class ProxyDestinationService(
         return Result<ProxyDestinationDto>.Success(dto);
     }
 
-    public async Task<Result<ProxyDestinationDto>> CreateAsync(ProxyDestinationDto dto)
+    public async Task<Result<ProxyDestinationDto>> CreateAsync(ProxyDestinationDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         var entity = _mapper.Map<ProxyDestination>(dto);
         entity.CreatedAt = DateTime.UtcNow;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set audit fields from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.CreatedBy = requestInfo.CurrentUser.Id;
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
         
         await _repository.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
@@ -78,7 +85,7 @@ public class ProxyDestinationService(
         return Result<ProxyDestinationDto>.Success(resultDto);
     }
 
-    public async Task<Result<ProxyDestinationDto>> UpdateAsync(Guid id, ProxyDestinationDto dto)
+    public async Task<Result<ProxyDestinationDto>> UpdateAsync(Guid id, ProxyDestinationDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -97,6 +104,12 @@ public class ProxyDestinationService(
         _mapper.Map(dto, entity);
         entity.UpdatedAt = DateTime.UtcNow;
         
+        // Set UpdatedBy from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
+        
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync();
         
@@ -106,7 +119,7 @@ public class ProxyDestinationService(
         return Result<ProxyDestinationDto>.Success(resultDto);
     }
 
-    public async Task<Result<bool>> DeleteAsync(Guid id)
+    public async Task<Result<bool>> DeleteAsync(Guid id, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         var entity = await _repository.GetByIdAsync(id);
@@ -118,6 +131,12 @@ public class ProxyDestinationService(
 
         entity.IsActive = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set UpdatedBy from RequestInformation for delete operation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
         
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync();

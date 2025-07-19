@@ -1,4 +1,3 @@
-using Blogsphere.Api.Gateway.Models.Requests;
 using FluentValidation;
 
 namespace Blogsphere.Api.Gateway.Validators;

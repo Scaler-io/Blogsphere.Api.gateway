@@ -9,14 +9,14 @@ public class ProxyMappingProfile : Profile
 {
     public ProxyMappingProfile()
     {
-        // Entity to DTO mappings
+        // Entity to DTO mappings (include all fields including audit fields)
         CreateMap<ProxyCluster, ProxyClusterDto>();
         CreateMap<ProxyDestination, ProxyDestinationDto>();
         CreateMap<ProxyRoute, ProxyRouteDto>();
         CreateMap<ProxyHeader, ProxyHeaderDto>();
         CreateMap<ProxyTransform, ProxyTransformDto>();
 
-        // DTO to Entity mappings
+        // DTO to Entity mappings (include all fields including audit fields)
         CreateMap<ProxyClusterDto, ProxyCluster>();
         CreateMap<ProxyDestinationDto, ProxyDestination>();
         CreateMap<ProxyRouteDto, ProxyRoute>();
@@ -29,25 +29,41 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.Routes, opt => opt.Ignore());
 
         CreateMap<CreateProxyDestinationRequest, ProxyDestinationDto>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.ClusterId, opt => opt.Ignore());
 
         CreateMap<CreateProxyRouteRequest, ProxyRouteDto>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore());
 
         CreateMap<ProxyHeaderRequest, ProxyHeaderDto>()
-            .ForMember(dest => dest.Id, opt => opt.Ignore());
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore());
 
         CreateMap<ProxyTransformRequest, ProxyTransformDto>()
-            .ForMember(dest => dest.Id, opt => opt.Ignore());
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore());
 
         // Update request to DTO mappings
         CreateMap<UpdateProxyClusterRequest, ProxyClusterDto>()
@@ -55,19 +71,25 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.Routes, opt => opt.Ignore());
 
         CreateMap<UpdateProxyDestinationRequest, ProxyDestinationDto>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.ClusterId, opt => opt.Ignore());
 
         CreateMap<UpdateProxyRouteRequest, ProxyRouteDto>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore());
 
         // Request to Entity mappings (for backwards compatibility)
         CreateMap<CreateProxyClusterRequest, ProxyCluster>()
@@ -75,6 +97,8 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.Destinations, opt => opt.Ignore())
             .ForMember(dest => dest.Routes, opt => opt.Ignore());
 
@@ -82,6 +106,8 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.ClusterId, opt => opt.Ignore())
             .ForMember(dest => dest.Cluster, opt => opt.Ignore());
 
@@ -90,6 +116,8 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.Headers, opt => opt.Ignore())
             .ForMember(dest => dest.Transforms, opt => opt.Ignore())
             .ForMember(dest => dest.Cluster, opt => opt.Ignore());
@@ -99,6 +127,8 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.RouteId, opt => opt.Ignore())
             .ForMember(dest => dest.Route, opt => opt.Ignore());
 
@@ -107,6 +137,8 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.RouteId, opt => opt.Ignore())
             .ForMember(dest => dest.Route, opt => opt.Ignore());
     }

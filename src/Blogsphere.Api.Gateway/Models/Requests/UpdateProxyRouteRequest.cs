@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Blogsphere.Api.Gateway.Models.Requests;
 
 public class UpdateProxyRouteRequest

@@ -11,7 +11,9 @@ public class ProxyRouteDto
     public bool IsActive { get; set; }
     public Guid ClusterId { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string CreatedBy { get; set; }
+    public string UpdatedBy { get; set; }
     public ICollection<ProxyHeaderDto> Headers { get; set; } = [];
     public ICollection<ProxyTransformDto> Transforms { get; set; } = [];
 }
@@ -22,10 +24,20 @@ public class ProxyHeaderDto
     public string Name { get; set; }
     public string[] Values { get; set; }
     public string Mode { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string CreatedBy { get; set; }
+    public string UpdatedBy { get; set; }
 }
 
 public class ProxyTransformDto
 {
     public Guid Id { get; set; }
     public string PathPattern { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string CreatedBy { get; set; }
+    public string UpdatedBy { get; set; }
 } 

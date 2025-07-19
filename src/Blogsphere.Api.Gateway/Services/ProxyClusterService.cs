@@ -90,12 +90,19 @@ public class ProxyClusterService(
         return Result<ProxyClusterDto>.Success(dto);
     }
 
-    public async Task<Result<ProxyClusterDto>> CreateAsync(ProxyClusterDto dto)
+    public async Task<Result<ProxyClusterDto>> CreateAsync(ProxyClusterDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         var entity = _mapper.Map<ProxyCluster>(dto);
         entity.CreatedAt = DateTime.UtcNow;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set audit fields from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.CreatedBy = requestInfo.CurrentUser.Id;
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
         
         await _repository.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
@@ -106,7 +113,7 @@ public class ProxyClusterService(
         return Result<ProxyClusterDto>.Success(resultDto);
     }
 
-    public async Task<Result<ProxyClusterDto>> UpdateAsync(Guid id, ProxyClusterDto dto)
+    public async Task<Result<ProxyClusterDto>> UpdateAsync(Guid id, ProxyClusterDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -119,12 +126,12 @@ public class ProxyClusterService(
         }
 
         // Update main cluster properties using direct approach
-        await UpdateClusterPropertiesAsync(id, dto);
+        await UpdateClusterPropertiesAsync(id, dto, requestInfo);
 
         // Handle destinations update separately if provided
         if (dto.Destinations != null)
         {
-            await UpdateClusterDestinationsAsync(id, dto.Destinations);
+            await UpdateClusterDestinationsAsync(id, dto.Destinations, requestInfo);
         }
         
         // Get updated entity to return
@@ -137,7 +144,7 @@ public class ProxyClusterService(
         return Result<ProxyClusterDto>.Success(resultDto);
     }
 
-    public async Task<Result<ProxyClusterDto>> CreateFromRequestAsync(CreateProxyClusterRequest request)
+    public async Task<Result<ProxyClusterDto>> CreateFromRequestAsync(CreateProxyClusterRequest request, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -161,16 +168,18 @@ public class ProxyClusterService(
                 dest.IsActive = true;
                 dest.CreatedAt = DateTime.UtcNow;
                 dest.UpdatedAt = DateTime.UtcNow;
+                dest.CreatedBy = requestInfo.CurrentUser.Id;
+                dest.UpdatedBy = requestInfo.CurrentUser.Id;
             }
         }
 
         // Use the existing CreateAsync method
-        var result = await CreateAsync(dto);
+        var result = await CreateAsync(dto, requestInfo);
         _logger.Here().MethodExited();
         return result;
     }
 
-    public async Task<Result<ProxyClusterDto>> UpdateFromRequestAsync(Guid id, UpdateProxyClusterRequest request)
+    public async Task<Result<ProxyClusterDto>> UpdateFromRequestAsync(Guid id, UpdateProxyClusterRequest request, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         
@@ -190,7 +199,7 @@ public class ProxyClusterService(
         // Handle explicit destination removals first
         if (request.RemoveDestinations != null && request.RemoveDestinations.Any())
         {
-            await RemoveClusterDestinationsAsync(id, request.RemoveDestinations);
+            await RemoveClusterDestinationsAsync(id, request.RemoveDestinations, requestInfo);
         }
 
         // Map destinations if provided
@@ -204,10 +213,10 @@ public class ProxyClusterService(
         }
 
         // Use the smart update logic
-        return await UpdateAsync(id, dto);
+        return await UpdateAsync(id, dto, requestInfo);
     }
 
-    private async Task UpdateClusterPropertiesAsync(Guid id, ProxyClusterDto dto)
+    private async Task UpdateClusterPropertiesAsync(Guid id, ProxyClusterDto dto, RequestInformation requestInfo)
     {
         // Load only the cluster entity for updating basic properties
         var entity = await _repository.AsQueryable()
@@ -224,12 +233,18 @@ public class ProxyClusterService(
         entity.HealthCheckInterval = dto.HealthCheckInterval;
         entity.HealthCheckTimeout = dto.HealthCheckTimeout;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set UpdatedBy from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
 
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private async Task UpdateClusterDestinationsAsync(Guid clusterId, ICollection<ProxyDestinationDto> newDestinations)
+    private async Task UpdateClusterDestinationsAsync(Guid clusterId, ICollection<ProxyDestinationDto> newDestinations, RequestInformation requestInfo)
     {
         // Get existing destinations for this cluster
         var existingDestinations = await _unitOfWork.Destinations.AsQueryable()
@@ -246,6 +261,13 @@ public class ProxyClusterService(
                 if (destinationDto.Address != null) existingDestination.Address = destinationDto.Address;
                 existingDestination.IsActive = destinationDto.IsActive;
                 existingDestination.UpdatedAt = DateTime.UtcNow;
+                
+                // Set UpdatedBy from RequestInformation
+                if (requestInfo?.CurrentUser?.Id != null)
+                {
+                    existingDestination.UpdatedBy = requestInfo.CurrentUser.Id;
+                }
+                
                 _unitOfWork.Destinations.Update(existingDestination);
             }
             else
@@ -261,6 +283,14 @@ public class ProxyClusterService(
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
+                
+                // Set audit fields from RequestInformation
+                if (requestInfo?.CurrentUser?.Id != null)
+                {
+                    newDestination.CreatedBy = requestInfo.CurrentUser.Id;
+                    newDestination.UpdatedBy = requestInfo.CurrentUser.Id;
+                }
+                
                 await _unitOfWork.Destinations.AddAsync(newDestination);
             }
         }
@@ -277,7 +307,7 @@ public class ProxyClusterService(
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private async Task RemoveClusterDestinationsAsync(Guid clusterId, ICollection<string> destinationIdsToRemove)
+    private async Task RemoveClusterDestinationsAsync(Guid clusterId, ICollection<string> destinationIdsToRemove, RequestInformation requestInfo)
     {
         var destinationsToRemove = await _unitOfWork.Destinations.AsQueryable()
             .Where(d => d.ClusterId == clusterId && destinationIdsToRemove.Contains(d.DestinationId))
@@ -291,7 +321,7 @@ public class ProxyClusterService(
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task<Result<bool>> DeleteAsync(Guid id)
+    public async Task<Result<bool>> DeleteAsync(Guid id, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         var entity = await _repository.GetByIdAsync(id);
@@ -303,6 +333,12 @@ public class ProxyClusterService(
 
         entity.IsActive = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set UpdatedBy from RequestInformation for delete operation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
         
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync();

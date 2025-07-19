@@ -5,7 +5,8 @@ using Blogsphere.Api.Gateway.Infrastructure.BackgroundServices;
 using Blogsphere.Api.Gateway.Infrastructure.Extensions;
 using Blogsphere.Api.Gateway.Middlewares;
 using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Models.Enums;
+using Blogsphere.Api.Gateway.Services.Interfaces;
+using Blogsphere.Api.Gateway.Services.Security;
 using Blogsphere.Api.Gateway.Swagger;
 using Blogsphere.Api.Gateway.Swagger.Examples;
 using FluentValidation.AspNetCore;
@@ -103,8 +104,14 @@ public static class ServiceCollectionExtensions
         // Register background service for config refresh
         services.AddHostedService<ProxyConfigRefreshService>();
 
-        services.AddTransient<SubscriptionValidationMiddleware>();
+        services.AddTransient<CorrelationHeaderEnricher>();
+        services.AddTransient<RequestLoggerMiddleware>();
         services.AddTransient<GlobalExceptionMiddleware>();
+        services.AddTransient<SubscriptionValidationMiddleware>();
+
+        services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IPermissionMapper, PermissionMapper>();
+        services.AddHttpContextAccessor();
 
         // Configure CORS
         services.AddCors(options => 
@@ -129,7 +136,7 @@ public static class ServiceCollectionExtensions
                     ValidAudience = identityGroupAccess.Audience,
                     ValidateIssuerSigningKey = true,
                     ValidateAudience = true,
-                    ValidateIssuer = true,
+                    ValidateIssuer = false,
                     ClockSkew = TimeSpan.Zero
                 };
             });

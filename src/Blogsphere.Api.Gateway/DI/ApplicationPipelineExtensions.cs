@@ -31,6 +31,8 @@ public static class ApplicationPipelineExtensions
         app.UseCors("blogspherecors");
 
         // Apply subscription validation middleware globally
+        app.UseMiddleware<CorrelationHeaderEnricher>();
+        app.UseMiddleware<RequestLoggerMiddleware>();
         app.UseMiddleware<SubscriptionValidationMiddleware>();
         app.UseMiddleware<GlobalExceptionMiddleware>();
 

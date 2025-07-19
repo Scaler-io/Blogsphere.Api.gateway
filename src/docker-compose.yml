@@ -1,6 +1,11 @@
 version: "3.8"
 
 services:
+  blogsphere.api.gateway:
+    image: ${DOCKER_REGISTRY-}blogsphereapigateway
+    build:
+      context: .
+      dockerfile: Blogsphere.Api.Gateway/Dockerfile
   gatewaydb:
     image: postgres
 

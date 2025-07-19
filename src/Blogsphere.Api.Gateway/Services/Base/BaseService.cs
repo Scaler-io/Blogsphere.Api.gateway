@@ -94,7 +94,7 @@ public abstract class BaseService<T>(
         return Result<PaginatedResult<T>>.Success(result);
     }
 
-    public virtual async Task<Result<T>> CreateAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<T>> CreateAsync(T entity, RequestInformation requestInfo, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
         _logger.Debug("Creating new {EntityType}", typeof(T).Name);
@@ -104,6 +104,13 @@ public abstract class BaseService<T>(
         entity.UpdatedAt = DateTime.UtcNow;
         entity.IsActive = true;
         
+        // Set audit fields from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.CreatedBy = requestInfo.CurrentUser.Id;
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
+        
         await _repository.AddAsync(entity, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         
@@ -112,7 +119,7 @@ public abstract class BaseService<T>(
         return Result<T>.Success(entity);
     }
 
-    public virtual async Task<Result<T>> UpdateAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<T>> UpdateAsync(T entity, RequestInformation requestInfo, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
         _logger.Debug("Updating {EntityType} with ID {Id}", typeof(T).Name, entity.Id);
@@ -127,8 +134,15 @@ public abstract class BaseService<T>(
 
         // Preserve metadata
         entity.CreatedAt = existingEntity.CreatedAt;
+        entity.CreatedBy = existingEntity.CreatedBy; // Preserve original creator
         entity.IsActive = existingEntity.IsActive;
         entity.UpdatedAt = DateTime.UtcNow;
+        
+        // Set UpdatedBy from RequestInformation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
         
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -138,7 +152,7 @@ public abstract class BaseService<T>(
         return Result<T>.Success(entity);
     }
 
-    public virtual async Task<Result<bool>> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<Result<bool>> DeleteAsync(Guid id, RequestInformation requestInfo, CancellationToken cancellationToken = default)
     {
         _logger.Here().MethodEntered();
         _logger.Debug("Deleting {EntityType} with ID {Id}", typeof(T).Name, id);
@@ -155,12 +169,34 @@ public abstract class BaseService<T>(
         entity.IsActive = false;
         entity.UpdatedAt = DateTime.UtcNow;
         
+        // Set UpdatedBy from RequestInformation for delete operation
+        if (requestInfo?.CurrentUser?.Id != null)
+        {
+            entity.UpdatedBy = requestInfo.CurrentUser.Id;
+        }
+        
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         
         _logger.Information("Soft deleted {EntityType} with ID {Id}", typeof(T).Name, id);
         _logger.Here().MethodExited();
         return Result<bool>.Success(true);
+    }
+
+    // Backward compatibility methods for cases where RequestInformation is not available
+    protected virtual async Task<Result<T>> CreateAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        return await CreateAsync(entity, null, cancellationToken);
+    }
+
+    protected virtual async Task<Result<T>> UpdateAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        return await UpdateAsync(entity, null, cancellationToken);
+    }
+
+    protected virtual async Task<Result<bool>> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await DeleteAsync(id, null, cancellationToken);
     }
 
     protected virtual IQueryable<T> ApplySearch(IQueryable<T> query, string searchTerm)
