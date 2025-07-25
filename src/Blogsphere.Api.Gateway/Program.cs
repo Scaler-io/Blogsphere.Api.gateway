@@ -12,7 +12,9 @@ builder.Services.AddApplicationServices(builder.Configuration, builder.Environme
 builder.Services.AddDatabaseServices(builder.Configuration);
 builder.Services.AddBusinessLogicServices();
 
+#if DEBUG
 builder.WebHost.UseUrls("http://localhost:8000");
+#endif
 
 var app = builder.Build();
 
