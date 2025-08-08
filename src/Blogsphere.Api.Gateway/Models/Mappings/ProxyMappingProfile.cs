@@ -1,6 +1,7 @@
 using AutoMapper;
 using Blogsphere.Api.Gateway.Entity;
 using Blogsphere.Api.Gateway.Models.DTOs;
+using Blogsphere.Api.Gateway.Models.DTOs.Search;
 using Blogsphere.Api.Gateway.Models.Requests;
 
 namespace Blogsphere.Api.Gateway.Models.Mappings;
@@ -141,5 +142,21 @@ public class ProxyMappingProfile : Profile
             .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore())
             .ForMember(dest => dest.RouteId, opt => opt.Ignore())
             .ForMember(dest => dest.Route, opt => opt.Ignore());
+
+        CreateMap<ProxyCluster, ProxyClusterSearchableDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+            .ForMember(dest => dest.LoadBalancerName, opt => opt.MapFrom(src => src.LoadBalancingPolicy))
+            .ForMember(dest => dest.DestinationCount, opt => opt.MapFrom(src => src.Destinations.Count))
+            .ForMember(dest => dest.RouteCount, opt => opt.MapFrom(src => src.Routes.Count))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.IsActive ? "Active" : "Inactive"));
+        
+        CreateMap<ProxyRoute, ProxyRouteSearchableDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+            .ForMember(dest => dest.RouteId, opt => opt.MapFrom(src => src.RouteId))
+            .ForMember(dest => dest.Path, opt => opt.MapFrom(src => src.Path))
+            .ForMember(dest => dest.Cluster, opt => opt.MapFrom(src => src.Cluster.ClusterId))
+            .ForMember(dest => dest.RateLimitterPolicy, opt => opt.MapFrom(src => src.RateLimiterPolicy))
+            .ForMember(dest => dest.TransformCount, opt => opt.MapFrom(src => src.Transforms.Count))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.IsActive ? "Active" : "Inactive"));
     }
 } 

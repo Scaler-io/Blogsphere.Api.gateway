@@ -15,8 +15,8 @@ public class ProxyClusterResponseExample : IExamplesProvider<ProxyClusterDto>
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Destinations = new List<ProxyDestinationDto>
-            {
+            Destinations =
+            [
                 new()
                 {
                     Id = Guid.NewGuid(),
@@ -35,7 +35,7 @@ public class ProxyClusterResponseExample : IExamplesProvider<ProxyClusterDto>
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 }
-            }
+            ]
         };
     }
 } 

@@ -1,4 +1,3 @@
-using Blogsphere.Api.Gateway.Models.Requests;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace Blogsphere.Api.Gateway.Swagger.Examples;
@@ -11,8 +10,8 @@ public class CreateProxyClusterRequestExample : IExamplesProvider<CreateProxyClu
         {
             ClusterId = "backend-services",
             LoadBalancingPolicy = "RoundRobin",
-            Destinations = new List<CreateProxyDestinationRequest>
-            {
+            Destinations =
+            [
                 new()
                 {
                     DestinationId = "backend-1",
@@ -23,7 +22,7 @@ public class CreateProxyClusterRequestExample : IExamplesProvider<CreateProxyClu
                     DestinationId = "backend-2",
                     Address = "https://backend2.example.com"
                 }
-            }
+            ]
         };
     }
 } 

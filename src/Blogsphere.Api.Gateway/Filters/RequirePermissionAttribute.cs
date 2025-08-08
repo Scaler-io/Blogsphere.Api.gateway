@@ -30,6 +30,14 @@ public class RequirePermissionAttribute : TypeFilterAttribute
         public void OnActionExecuting(ActionExecutingContext context)
         {
             _logger.Here().MethodEntered();
+
+            var isM2MRequest = context.HttpContext.Request.Headers.TryGetValue("X-M2M-Request", out var m2mRequest);
+            if (isM2MRequest)
+            {
+                _logger.Here().Debug("M2M request detected, skipping permission check");
+                return;
+            }
+            
             var currentUser = _identityService.PrepareUser();
 
             // Alternative optimization for larger permission sets:

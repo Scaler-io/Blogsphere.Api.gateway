@@ -12,7 +12,6 @@ public static class BusinessLogicServiceExtensions
         services.AddTransient<ISubscriptionService, SubscriptionService>();
         services.AddScoped<IProxyRouteService, ProxyRouteService>();
         services.AddScoped<IProxyClusterService, ProxyClusterService>();
-        services.AddScoped<IProxyDestinationService, ProxyDestinationService>();
 
         // Add AutoMapper
         services.AddAutoMapper(typeof(ProxyMappingProfile));

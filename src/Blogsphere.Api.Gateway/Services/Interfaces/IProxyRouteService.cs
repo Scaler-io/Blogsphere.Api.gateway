@@ -1,12 +1,13 @@
 using Blogsphere.Api.Gateway.Models.Common;
 using Blogsphere.Api.Gateway.Models.DTOs;
+using Blogsphere.Api.Gateway.Models.DTOs.Search;
 using Blogsphere.Api.Gateway.Models.Requests;
 
 namespace Blogsphere.Api.Gateway.Services.Interfaces;
 
 public interface IProxyRouteService
 {
-    Task<Result<PaginatedResult<ProxyRouteDto>>> GetAllAsync(PaginationRequest request);
+    Task<Result<PaginatedResult<ProxyRouteSearchableDto>>> GetAllAsync(PaginationRequest request);
     Task<Result<ProxyRouteDto>> GetByIdAsync(Guid id);
     Task<Result<ProxyRouteDto>> CreateFromRequestAsync(CreateProxyRouteRequest request, RequestInformation requestInfo);
     Task<Result<ProxyRouteDto>> CreateAsync(ProxyRouteDto dto, RequestInformation requestInfo);

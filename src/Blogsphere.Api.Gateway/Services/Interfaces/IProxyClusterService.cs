@@ -1,13 +1,14 @@
 
 using Blogsphere.Api.Gateway.Models.Common;
 using Blogsphere.Api.Gateway.Models.DTOs;
+using Blogsphere.Api.Gateway.Models.DTOs.Search;
 using Blogsphere.Api.Gateway.Models.Requests;
 
 namespace Blogsphere.Api.Gateway.Services.Interfaces;
 
 public interface IProxyClusterService
 {
-    Task<Result<PaginatedResult<ProxyClusterDto>>> GetAllAsync(PaginationRequest request);
+    Task<Result<PaginatedResult<ProxyClusterSearchableDto>>> GetAllAsync(PaginationRequest request);
     Task<Result<ProxyClusterDto>> GetByIdAsync(Guid id);
     Task<Result<ProxyClusterDto>> CreateFromRequestAsync(CreateProxyClusterRequest request, RequestInformation requestInfo);
     Task<Result<ProxyClusterDto>> CreateAsync(ProxyClusterDto dto, RequestInformation requestInfo);
@@ -16,4 +17,4 @@ public interface IProxyClusterService
     Task<Result<bool>> DeleteAsync(Guid id, RequestInformation requestInfo);
     Task<Result<bool>> AnyAsync();
     Task<Result<ProxyClusterDto>> GetByClusterIdAsync(string clusterId);
-} 
+}

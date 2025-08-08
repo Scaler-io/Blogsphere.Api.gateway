@@ -6,9 +6,9 @@ using Blogsphere.Api.Gateway.Entity;
 using Blogsphere.Api.Gateway.Extensions;
 using Blogsphere.Api.Gateway.Models.Common;
 using Blogsphere.Api.Gateway.Models.DTOs;
+using Blogsphere.Api.Gateway.Models.DTOs.Search;
 using Blogsphere.Api.Gateway.Models.Enums;
 using Blogsphere.Api.Gateway.Models.Requests;
-using Blogsphere.Api.Gateway.Services.Base;
 using Blogsphere.Api.Gateway.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,12 +18,12 @@ public class ProxyRouteService(
     ILogger logger,
     IProxyRouteRepository repository,
     IUnitOfWork unitOfWork,
-    IMapper mapper) : BaseService<ProxyRoute>(logger, repository, unitOfWork), IProxyRouteService
+    IMapper mapper) : IProxyRouteService
 {
-    private new readonly IProxyRouteRepository _repository = repository;
-    private new readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IProxyRouteRepository _repository = repository;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
-    private new readonly ILogger _logger = logger.ForContext<ProxyRouteService>();
+    private readonly ILogger _logger = logger.ForContext<ProxyRouteService>();
 
     public async Task<Result<bool>> AnyAsync()
     {
@@ -33,7 +33,7 @@ public class ProxyRouteService(
         return Result<bool>.Success(result);
     }
 
-    public async Task<Result<PaginatedResult<ProxyRouteDto>>> GetAllAsync(PaginationRequest request)
+    public async Task<Result<PaginatedResult<ProxyRouteSearchableDto>>> GetAllAsync(PaginationRequest request)
     {
         _logger.Here().MethodEntered();
         var query = _repository.Include(GetDefaultIncludes());
@@ -43,18 +43,20 @@ public class ProxyRouteService(
             .Take(request.PageSize)
             .ToListAsync();
 
-        var dtos = _mapper.Map<List<ProxyRouteDto>>(items);
-        var result = new PaginatedResult<ProxyRouteDto>
+        var dtos = _mapper.Map<List<ProxyRouteSearchableDto>>(items);
+        var result = new PaginatedResult<ProxyRouteSearchableDto>   
         {
             Items = dtos,
             TotalCount = totalCount,
             PageNumber = request.PageNumber,
             PageSize = request.PageSize
         };
-
+        
+        _logger.Here().Information("Found {TotalCount} routes", totalCount);
         _logger.Here().MethodExited();
-        return Result<PaginatedResult<ProxyRouteDto>>.Success(result);
+        return Result<PaginatedResult<ProxyRouteSearchableDto>>.Success(result);
     }
+
 
     public async Task<Result<ProxyRouteDto>> GetByIdAsync(Guid id)
     {
@@ -459,7 +461,7 @@ public class ProxyRouteService(
         return Result<bool>.Success(true);
     }
 
-    protected override Expression<Func<ProxyRoute, object>>[] GetDefaultIncludes()
+    private Expression<Func<ProxyRoute, object>>[] GetDefaultIncludes()
     {
         return
         [

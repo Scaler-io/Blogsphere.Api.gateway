@@ -1,6 +1,5 @@
 using System.Net;
 using Asp.Versioning;
-using AutoMapper;
 using Blogsphere.Api.Gateway.Extensions;
 using Blogsphere.Api.Gateway.Infrastructure.Yarp;
 using Blogsphere.Api.Gateway.Models.Common;
@@ -11,11 +10,11 @@ using Blogsphere.Api.Gateway.Swagger.Examples;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
-using System.ComponentModel.DataAnnotations;
 using Blogsphere.Api.Gateway.Swagger;
 using Blogsphere.Api.Gateway.Filters;
 using Blogsphere.Api.Gateway.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
+using Blogsphere.Api.Gateway.Models.DTOs.Search;
 
 namespace Blogsphere.Api.Gateway.Controllers.v1;
 
@@ -26,13 +25,11 @@ public class ProxyRouteController(
     IProxyRouteService routeService,
     DatabaseProxyConfigProvider configProvider,
     ILogger logger,
-    IIdentityService identityService,
-    IMapper mapper) : BaseApiController(logger, identityService)
+    IIdentityService identityService) : BaseApiController(logger, identityService)
 {
     private readonly IProxyRouteService _routeService = routeService;
     private readonly DatabaseProxyConfigProvider _configProvider = configProvider;
     private readonly ILogger _logger = logger;
-    private readonly IMapper _mapper = mapper;
 
     [HttpGet]
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
@@ -40,17 +37,16 @@ public class ProxyRouteController(
     [SwaggerResponseExample(StatusCodes.Status200OK, typeof(PaginatedProxyRouteResponseExample))]
     [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
     [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
-    [ProducesResponseType(typeof(PaginatedResult<ProxyRouteDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResult<ProxyRouteSearchableDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanViewSystemSettings)]
     public async Task<IActionResult> GetRoutes(
-        [FromQuery, Range(1, int.MaxValue), SwaggerParameter("Page number for pagination")] int pageNumber = 1,
-        [FromQuery, Range(1, 100), SwaggerParameter("Number of items per page")] int pageSize = 10)
+        [FromQuery, SwaggerParameter("The page number")] int pageNumber = 1,
+        [FromQuery, SwaggerParameter("The page size")] int pageSize = 10)
     {
         _logger.Here().MethodEntered();
-        var result = await _routeService.GetAllAsync(
-            new PaginationRequest { PageNumber = pageNumber, PageSize = pageSize });
+        var result = await _routeService.GetAllAsync(new PaginationRequest { PageNumber = pageNumber, PageSize = pageSize });
         _logger.Here().MethodExited();
         return OkOrFailure(result, HttpStatusCode.OK);
     }

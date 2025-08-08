@@ -6,9 +6,9 @@ using Blogsphere.Api.Gateway.Entity;
 using Blogsphere.Api.Gateway.Extensions;
 using Blogsphere.Api.Gateway.Models.Common;
 using Blogsphere.Api.Gateway.Models.DTOs;
+using Blogsphere.Api.Gateway.Models.DTOs.Search;
 using Blogsphere.Api.Gateway.Models.Enums;
 using Blogsphere.Api.Gateway.Models.Requests;
-using Blogsphere.Api.Gateway.Services.Base;
 using Blogsphere.Api.Gateway.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,12 +18,12 @@ public class ProxyClusterService(
     ILogger logger,
     IProxyClusterRepository repository,
     IUnitOfWork unitOfWork,
-    IMapper mapper) : BaseService<ProxyCluster>(logger, repository, unitOfWork), IProxyClusterService
+    IMapper mapper) : IProxyClusterService
 {
-    private new readonly IProxyClusterRepository _repository = repository;
-    private new readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IProxyClusterRepository _repository = repository;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
-    private new readonly ILogger _logger = logger.ForContext<ProxyClusterService>();
+    private readonly ILogger _logger = logger.ForContext<ProxyClusterService>();
 
     public async Task<Result<bool>> AnyAsync()
     {
@@ -50,7 +50,7 @@ public class ProxyClusterService(
         return Result<ProxyClusterDto>.Success(dto);
     }
 
-    public async Task<Result<PaginatedResult<ProxyClusterDto>>> GetAllAsync(PaginationRequest request)
+    public async Task<Result<PaginatedResult<ProxyClusterSearchableDto>>> GetAllAsync(PaginationRequest request)
     {
         _logger.Here().MethodEntered();
         var query = IncludeAllRelationships(_repository.AsQueryable());
@@ -60,8 +60,8 @@ public class ProxyClusterService(
             .Take(request.PageSize)
             .ToListAsync();
 
-        var dtos = _mapper.Map<List<ProxyClusterDto>>(items);
-        var result = new PaginatedResult<ProxyClusterDto>
+        var dtos = _mapper.Map<List<ProxyClusterSearchableDto>>(items);
+        var result = new PaginatedResult<ProxyClusterSearchableDto>
         {
             Items = dtos,
             TotalCount = totalCount,
@@ -69,8 +69,9 @@ public class ProxyClusterService(
             PageSize = request.PageSize
         };
 
+        _logger.Here().Information("Found {TotalCount} clusters", totalCount);
         _logger.Here().MethodExited();
-        return Result<PaginatedResult<ProxyClusterDto>>.Success(result);
+        return Result<PaginatedResult<ProxyClusterSearchableDto>>.Success(result);
     }
 
     public async Task<Result<ProxyClusterDto>> GetByIdAsync(Guid id)
@@ -348,7 +349,7 @@ public class ProxyClusterService(
         return Result<bool>.Success(true);
     }
 
-    protected override Expression<Func<ProxyCluster, object>>[] GetDefaultIncludes()
+    private Expression<Func<ProxyCluster, object>>[] GetDefaultIncludes()
     {
         return
         [
