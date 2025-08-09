@@ -1,6 +1,7 @@
 using Asp.Versioning.ApiExplorer;
 using Blogsphere.Api.Gateway.Models.Constants;
 using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -79,5 +80,16 @@ public sealed class SwaggerConfiguration
                     $"/swagger/{description.GroupName}/swagger.json",
                     $"Proxy API Gateway - {description.GroupName.ToUpperInvariant()}");
         }
+    }
+
+    public static void SetupScalarUiOptions(ScalarOptions options, ApiVersionDescription description)
+    {
+        options.WithOpenApiRoutePattern($"/swagger/{description.GroupName}/swagger.json")
+        .WithTitle($"Proxy API Gateway - {description.GroupName.ToUpperInvariant()}")
+        .WithDarkModeToggle()
+        .WithTheme(ScalarTheme.Saturn)
+        .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.Http)
+        .WithDefaultFonts()
+        .WithLayout(ScalarLayout.Modern);
     }
 }

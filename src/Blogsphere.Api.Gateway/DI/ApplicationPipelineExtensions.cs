@@ -3,6 +3,7 @@ using Blogsphere.Api.Gateway.Data.Seeding;
 using Blogsphere.Api.Gateway.Middlewares;
 using Blogsphere.Api.Gateway.Models.Common;
 using Blogsphere.Api.Gateway.Swagger;
+using Scalar.AspNetCore;
 
 namespace Blogsphere.Api.Gateway.DI;
 
@@ -14,6 +15,11 @@ public static class ApplicationPipelineExtensions
         {
             var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
             SwaggerConfiguration.SetupSwaggerUiOptions(options, provider);
+            foreach(var description in provider.ApiVersionDescriptions){
+               app.MapScalarApiReference($"scalar/{description.GroupName}", options => {
+                    SwaggerConfiguration.SetupScalarUiOptions(options, description);
+               }).WithMetadata(new SkipSubscriptionValidationAttribute());
+            }
         });
 
         // Configure security headers
