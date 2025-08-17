@@ -47,7 +47,7 @@ public class DatabaseProxyConfigProvider : IProxyConfigProvider
                             d => new DestinationConfig { Address = d.Address }
                         );
 
-                    if (!destinations.Any())
+                    if (destinations.Count == 0)
                     {
                         _logger.Here().Warning("Cluster {ClusterId} has no active destinations", cluster.ClusterId);
                         return null;

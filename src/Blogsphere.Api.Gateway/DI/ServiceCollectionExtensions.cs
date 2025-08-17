@@ -5,11 +5,14 @@ using Blogsphere.Api.Gateway.Infrastructure.BackgroundServices;
 using Blogsphere.Api.Gateway.Infrastructure.Extensions;
 using Blogsphere.Api.Gateway.Middlewares;
 using Blogsphere.Api.Gateway.Models.Common;
+using Blogsphere.Api.Gateway.Services;
+using Blogsphere.Api.Gateway.Services.Factory;
 using Blogsphere.Api.Gateway.Services.Interfaces;
 using Blogsphere.Api.Gateway.Services.Security;
 using Blogsphere.Api.Gateway.Swagger;
 using Blogsphere.Api.Gateway.Swagger.Examples;
 using FluentValidation.AspNetCore;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -93,9 +96,28 @@ public static class ServiceCollectionExtensions
                 tracing.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(appConfigOption.ApplicationIdentifier))
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
+                .AddMassTransitInstrumentation()
                 .AddZipkinExporter(options => options.Endpoint = new Uri(configuration["Zipkin:Url"] ?? 
                     throw new InvalidOperationException("Zipkin:Url configuration is missing")))
             );
+
+        // Configure EventBus
+        services.AddMassTransit(config => 
+        {
+            config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("apigateway", false));
+            config.UsingRabbitMq((context, cfg) => 
+            {
+                var eventBus = configuration.GetSection(EventBusOption.OptionName).Get<EventBusOption>();
+                cfg.Host(eventBus.Host, eventBus.VirtualHost, host => 
+                {
+                    host.Username(eventBus.Username);
+                    host.Password(eventBus.Password);
+                });
+                cfg.UseMessageRetry(retry => retry.Interval(3, 1000));
+                cfg.ConfigureEndpoints(context);
+            });
+        });
+
 
             // Configure YARP with database-driven configuration
         services.AddReverseProxy()
@@ -156,6 +178,9 @@ public static class ServiceCollectionExtensions
 
         services.AddValidators();
         services.AddFluentValidationAutoValidation();
+
+        services.AddScoped<IPublishServiceFactory, PublishServiceFactory>();
+        services.AddScoped(typeof(IPublishService<,>), typeof(PublishService<,>));
         
         return services;
     }

@@ -10,6 +10,7 @@ using Blogsphere.Api.Gateway.Models.DTOs.Search;
 using Blogsphere.Api.Gateway.Models.Enums;
 using Blogsphere.Api.Gateway.Models.Requests;
 using Blogsphere.Api.Gateway.Services.Interfaces;
+using Contracts.Events;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blogsphere.Api.Gateway.Services;
@@ -18,12 +19,14 @@ public class ProxyRouteService(
     ILogger logger,
     IProxyRouteRepository repository,
     IUnitOfWork unitOfWork,
-    IMapper mapper) : IProxyRouteService
+    IMapper mapper,
+    IPublishServiceFactory publishServiceFactory) : IProxyRouteService
 {
     private readonly IProxyRouteRepository _repository = repository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
     private readonly ILogger _logger = logger.ForContext<ProxyRouteService>();
+    private readonly IPublishServiceFactory _publishServiceFactory = publishServiceFactory;
 
     public async Task<Result<bool>> AnyAsync()
     {
@@ -77,7 +80,7 @@ public class ProxyRouteService(
     {
         _logger.Here().MethodEntered();
         
-        // Validate ClusterId exists
+        // Validate ClusterId exists if provided
         if (dto.ClusterId != Guid.Empty)
         {
             var clusterExists = await _unitOfWork.Clusters.AsQueryable()
@@ -91,8 +94,9 @@ public class ProxyRouteService(
         }
         
         var entity = _mapper.Map<ProxyRoute>(dto);
-        entity.CreatedAt = DateTime.UtcNow;
-        entity.UpdatedAt = DateTime.UtcNow;
+        var utcNow = DateTime.UtcNow;
+        entity.CreatedAt = utcNow;
+        entity.UpdatedAt = utcNow;
         
         // Set audit fields from RequestInformation
         if (requestInfo?.CurrentUser?.Id != null)
@@ -104,7 +108,25 @@ public class ProxyRouteService(
         await _repository.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
         
+        // Map to DTO for response
         var resultDto = _mapper.Map<ProxyRouteDto>(entity);
+        
+        // Publish route created event
+        await _publishServiceFactory.CreatePublishServiceAsync<ProxyRoute, ApiRouteCreated>()
+            .PublishAsync(entity, requestInfo.CorrelationId);
+
+        // Get cluster for update event (optimized query - only load what's needed for the event)
+        var cluster = await _unitOfWork.Clusters.AsQueryable()
+            .Include(c => c.Routes)
+            .Include(c => c.Destinations)
+            .FirstOrDefaultAsync(c => c.Id == entity.ClusterId);
+            
+        if (cluster != null)
+        {
+            await _publishServiceFactory.CreatePublishServiceAsync<ProxyCluster, ApiClusterUpdated>()
+                .PublishAsync(cluster, requestInfo.CorrelationId);
+        }
+
         _logger.Here().Information("Created route with ID {Id}", entity.Id);
         _logger.Here().MethodExited();
         return Result<ProxyRouteDto>.Success(resultDto);
@@ -156,7 +178,10 @@ public class ProxyRouteService(
             .Include(r => r.Transforms)
             .Include(r => r.Cluster)
             .FirstOrDefaultAsync(r => r.Id == id);
-            
+
+        await _publishServiceFactory.CreatePublishServiceAsync<ProxyRoute, ApiRouteUpdated>()
+        .PublishAsync(updatedEntity, requestInfo.CorrelationId);
+
         var resultDto = _mapper.Map<ProxyRouteDto>(updatedEntity);
         _logger.Here().Information("Updated route with ID {Id}", id);
         _logger.Here().MethodExited();
@@ -444,24 +469,29 @@ public class ProxyRouteService(
             return Result<bool>.Failure(ErrorCodes.NotFound, $"Route with ID {id} not found");
         }
 
-        entity.IsActive = false;
-        entity.UpdatedAt = DateTime.UtcNow;
-        
-        // Set UpdatedBy from RequestInformation for delete operation
-        if (requestInfo?.CurrentUser?.Id != null)
-        {
-            entity.UpdatedBy = requestInfo.CurrentUser.Id;
-        }
-        
-        _repository.Update(entity);
+        var clusterId = entity.ClusterId;        
+        _repository.Remove(entity);
         await _unitOfWork.SaveChangesAsync();
         
-        _logger.Here().Information("Soft deleted route with ID {Id}", id);
+        var updatedCluster = await _unitOfWork.Clusters.AsQueryable()
+            .Include(c => c.Routes)
+            .Include(c => c.Destinations)
+            .FirstOrDefaultAsync(c => c.Id == clusterId);
+
+        await _publishServiceFactory.CreatePublishServiceAsync<ProxyRoute, ApiRouteDeleted>()
+        .PublishAsync(entity, requestInfo.CorrelationId);
+    
+
+        await _publishServiceFactory.CreatePublishServiceAsync<ProxyCluster, ApiClusterUpdated>()
+        .PublishAsync(updatedCluster, requestInfo.CorrelationId);
+
+        
+        _logger.Here().Information("Deleted route with ID {Id}", id);
         _logger.Here().MethodExited();
         return Result<bool>.Success(true);
     }
 
-    private Expression<Func<ProxyRoute, object>>[] GetDefaultIncludes()
+    private static Expression<Func<ProxyRoute, object>>[] GetDefaultIncludes()
     {
         return
         [

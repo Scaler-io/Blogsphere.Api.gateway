@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using AutoMapper;
 using Blogsphere.Api.Gateway.Data.Interfaces;
 using Blogsphere.Api.Gateway.Data.Interfaces.Repositories;
@@ -10,6 +9,7 @@ using Blogsphere.Api.Gateway.Models.DTOs.Search;
 using Blogsphere.Api.Gateway.Models.Enums;
 using Blogsphere.Api.Gateway.Models.Requests;
 using Blogsphere.Api.Gateway.Services.Interfaces;
+using Contracts.Events;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blogsphere.Api.Gateway.Services;
@@ -18,12 +18,14 @@ public class ProxyClusterService(
     ILogger logger,
     IProxyClusterRepository repository,
     IUnitOfWork unitOfWork,
-    IMapper mapper) : IProxyClusterService
+    IMapper mapper, 
+    IPublishServiceFactory publishServiceFactory) : IProxyClusterService
 {
     private readonly IProxyClusterRepository _repository = repository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IMapper _mapper = mapper;
-    private readonly ILogger _logger = logger.ForContext<ProxyClusterService>();
+    private readonly ILogger _logger = logger;
+    private readonly IPublishServiceFactory _publishServiceFactory = publishServiceFactory;
 
     public async Task<Result<bool>> AnyAsync()
     {
@@ -38,7 +40,7 @@ public class ProxyClusterService(
         _logger.Here().MethodEntered();
         var entity = await IncludeAllRelationships(_repository.AsQueryable())
             .FirstOrDefaultAsync(c => c.ClusterId == clusterId);
-        
+
         if (entity == null)
         {
             _logger.Here().Warning("Cluster with ClusterId {ClusterId} not found", clusterId);
@@ -79,7 +81,7 @@ public class ProxyClusterService(
         _logger.Here().MethodEntered();
         var entity = await IncludeAllRelationships(_repository.AsQueryable())
             .FirstOrDefaultAsync(c => c.Id == id);
-            
+
         if (entity == null)
         {
             _logger.Here().Warning("Cluster with ID {Id} not found", id);
@@ -97,27 +99,32 @@ public class ProxyClusterService(
         var entity = _mapper.Map<ProxyCluster>(dto);
         entity.CreatedAt = DateTime.UtcNow;
         entity.UpdatedAt = DateTime.UtcNow;
-        
+
         // Set audit fields from RequestInformation
         if (requestInfo?.CurrentUser?.Id != null)
         {
             entity.CreatedBy = requestInfo.CurrentUser.Id;
             entity.UpdatedBy = requestInfo.CurrentUser.Id;
         }
-        
+
         await _repository.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
-        
+
+        await _publishServiceFactory.CreatePublishServiceAsync<ProxyCluster, ApiClusterCreated>()
+        .PublishAsync(entity, requestInfo.CorrelationId);
+
         var resultDto = _mapper.Map<ProxyClusterDto>(entity);
+
         _logger.Here().Information("Created cluster with ID {Id}", entity.Id);
         _logger.Here().MethodExited();
+        
         return Result<ProxyClusterDto>.Success(resultDto);
     }
 
     public async Task<Result<ProxyClusterDto>> UpdateAsync(Guid id, ProxyClusterDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
-        
+
         // Check if entity exists first
         var exists = await _repository.AsQueryable().AnyAsync(c => c.Id == id);
         if (!exists)
@@ -134,12 +141,15 @@ public class ProxyClusterService(
         {
             await UpdateClusterDestinationsAsync(id, dto.Destinations, requestInfo);
         }
-        
+
         // Get updated entity to return
         var updatedEntity = await IncludeAllRelationships(_repository.AsQueryable())
             .FirstOrDefaultAsync(c => c.Id == id);
-            
         var resultDto = _mapper.Map<ProxyClusterDto>(updatedEntity);
+
+        await _publishServiceFactory.CreatePublishServiceAsync<ProxyCluster, ApiClusterUpdated>()
+        .PublishAsync(updatedEntity, requestInfo.CorrelationId);
+
         _logger.Here().Information("Updated cluster with ID {Id}", id);
         _logger.Here().MethodExited();
         return Result<ProxyClusterDto>.Success(resultDto);
@@ -148,10 +158,10 @@ public class ProxyClusterService(
     public async Task<Result<ProxyClusterDto>> CreateFromRequestAsync(CreateProxyClusterRequest request, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
-        
+
         // Map request to DTO using AutoMapper
         var dto = _mapper.Map<ProxyClusterDto>(request);
-        
+
         // Set system properties
         dto.Id = Guid.NewGuid();
         dto.IsActive = true;
@@ -183,7 +193,7 @@ public class ProxyClusterService(
     public async Task<Result<ProxyClusterDto>> UpdateFromRequestAsync(Guid id, UpdateProxyClusterRequest request, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
-        
+
         // Check if entity exists without loading all related data
         var exists = await _repository.AsQueryable().AnyAsync(c => c.Id == id);
         if (!exists)
@@ -223,7 +233,7 @@ public class ProxyClusterService(
         var entity = await _repository.AsQueryable()
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id);
-            
+
         if (entity == null) return;
 
         // Update only provided cluster properties (null values are ignored)
@@ -234,7 +244,7 @@ public class ProxyClusterService(
         entity.HealthCheckInterval = dto.HealthCheckInterval;
         entity.HealthCheckTimeout = dto.HealthCheckTimeout;
         entity.UpdatedAt = DateTime.UtcNow;
-        
+
         // Set UpdatedBy from RequestInformation
         if (requestInfo?.CurrentUser?.Id != null)
         {
@@ -262,13 +272,13 @@ public class ProxyClusterService(
                 if (destinationDto.Address != null) existingDestination.Address = destinationDto.Address;
                 existingDestination.IsActive = destinationDto.IsActive;
                 existingDestination.UpdatedAt = DateTime.UtcNow;
-                
+
                 // Set UpdatedBy from RequestInformation
                 if (requestInfo?.CurrentUser?.Id != null)
                 {
                     existingDestination.UpdatedBy = requestInfo.CurrentUser.Id;
                 }
-                
+
                 _unitOfWork.Destinations.Update(existingDestination);
             }
             else
@@ -284,14 +294,14 @@ public class ProxyClusterService(
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                
+
                 // Set audit fields from RequestInformation
                 if (requestInfo?.CurrentUser?.Id != null)
                 {
                     newDestination.CreatedBy = requestInfo.CurrentUser.Id;
                     newDestination.UpdatedBy = requestInfo.CurrentUser.Id;
                 }
-                
+
                 await _unitOfWork.Destinations.AddAsync(newDestination);
             }
         }
@@ -299,7 +309,7 @@ public class ProxyClusterService(
         // Permanently delete destinations that are not in the new list
         var providedDestinationIds = newDestinations.Select(d => d.DestinationId).ToHashSet();
         var destinationsToDelete = existingDestinations.Where(d => !providedDestinationIds.Contains(d.DestinationId)).ToList();
-        
+
         foreach (var destinationToDelete in destinationsToDelete)
         {
             _unitOfWork.Destinations.Remove(destinationToDelete);
@@ -332,34 +342,21 @@ public class ProxyClusterService(
             return Result<bool>.Failure(ErrorCodes.NotFound, $"Cluster with ID {id} not found");
         }
 
-        entity.IsActive = false;
-        entity.UpdatedAt = DateTime.UtcNow;
-        
-        // Set UpdatedBy from RequestInformation for delete operation
-        if (requestInfo?.CurrentUser?.Id != null)
-        {
-            entity.UpdatedBy = requestInfo.CurrentUser.Id;
-        }
-        
-        _repository.Update(entity);
+        _repository.Remove(entity);
+
+        await _publishServiceFactory.CreatePublishServiceAsync<ProxyCluster, ApiClusterDeleted>()
+        .PublishAsync(entity, requestInfo.CorrelationId);
+
         await _unitOfWork.SaveChangesAsync();
-        
-        _logger.Here().Information("Soft deleted cluster with ID {Id}", id);
+
+        _logger.Here().Information("Deleted cluster with ID {Id}", id);
         _logger.Here().MethodExited();
         return Result<bool>.Success(true);
     }
 
-    private Expression<Func<ProxyCluster, object>>[] GetDefaultIncludes()
-    {
-        return
-        [
-            c => c.Destinations,
-            c => c.Routes.Where(r => r.IsActive)
-        ];
-    }
-    
+
     // Override to include nested relationships for routes
-    private IQueryable<ProxyCluster> IncludeAllRelationships(IQueryable<ProxyCluster> query)
+    private static IQueryable<ProxyCluster> IncludeAllRelationships(IQueryable<ProxyCluster> query)
     {
         return query
             .Include(c => c.Destinations)

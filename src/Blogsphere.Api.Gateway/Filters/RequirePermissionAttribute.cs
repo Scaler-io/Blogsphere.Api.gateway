@@ -9,18 +9,19 @@ namespace Blogsphere.Api.Gateway.Filters;
 
 public class RequirePermissionAttribute : TypeFilterAttribute
 {
-    public RequirePermissionAttribute(ApiAccess permission) : base(typeof(RequirePermissionExecutor))
+    public RequirePermissionAttribute(ApiAccess permission, params string[] scopes) : base(typeof(RequirePermissionExecutor))
     {
-        Arguments = [permission];
+        Arguments = [permission, scopes];
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class RequirePermissionExecutor(IIdentityService identityService, ILogger logger, IPermissionMapper permissionMapper, ApiAccess permission) : Attribute, IActionFilter
+    public class RequirePermissionExecutor(IIdentityService identityService, ILogger logger, IPermissionMapper permissionMapper, ApiAccess permission, params string[] scopes) : Attribute, IActionFilter
     {
         private readonly IIdentityService _identityService = identityService;
         private readonly ILogger _logger = logger;
         private readonly ApiAccess _permission = permission;
         private readonly IPermissionMapper _permissionMapper = permissionMapper;
+        private readonly List<string> _scopes = [.. scopes];
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
@@ -30,6 +31,22 @@ public class RequirePermissionAttribute : TypeFilterAttribute
         public void OnActionExecuting(ActionExecutingContext context)
         {
             _logger.Here().MethodEntered();
+            if (_scopes.Any())
+            {
+                var availableScopes = context.HttpContext
+                    .User
+                    .Claims
+                    .Where(c => c.Type == "scope")
+                    .Select(c => c.Value)
+                    .ToList();
+
+                if(_scopes.Any(s => !availableScopes.Contains(s)))
+                {
+                    _logger.Here().Error("No matching scope found");
+                    context.Result = new UnauthorizedObjectResult(new ApiResponse(ErrorCodes.Unauthorized, "Access denied"));
+                    return;
+                }
+            }
 
             var isM2MRequest = context.HttpContext.Request.Headers.TryGetValue("X-M2M-Request", out var m2mRequest);
             if (isM2MRequest)

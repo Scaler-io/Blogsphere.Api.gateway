@@ -34,13 +34,16 @@ public class ProxyClusterController(
     [HttpGet]
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "GetClusters", Summary = "Retrieves all proxy clusters", Description = "Returns a paginated list of all proxy clusters in the system")]
+    // 200
     [SwaggerResponseExample(StatusCodes.Status200OK, typeof(PaginatedProxyClusterResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(PaginatedResult<ProxyClusterSearchableDto>), StatusCodes.Status200OK)]
+    // 400
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
-    [RequirePermission(ApiAccess.CanViewSystemSettings)]
+    [RequirePermission(ApiAccess.CanViewSystemSettings, "apigateway:read")]
     public async Task<IActionResult> GetClusters(
         [FromQuery, SwaggerParameter("The page number")] int pageNumber = 1,
         [FromQuery, SwaggerParameter("The page size")] int pageSize = 10)
@@ -54,11 +57,14 @@ public class ProxyClusterController(
     [HttpGet("{id:guid}")]
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "GetCluster", Summary = "Retrieves a specific proxy cluster", Description = "Returns detailed information about a specific proxy cluster")]
+    // 200
     [SwaggerResponseExample(StatusCodes.Status200OK, typeof(ProxyClusterResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ProxyClusterDto), StatusCodes.Status200OK)]
+    // 404
+    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanViewSystemSettings)]
     public async Task<IActionResult> GetCluster(
@@ -74,13 +80,16 @@ public class ProxyClusterController(
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "CreateCluster", Summary = "Creates a new proxy cluster", Description = "Creates a new proxy cluster with the specified configuration")]
     [SwaggerRequestExample(typeof(CreateProxyClusterRequest), typeof(CreateProxyClusterRequestExample))]
+    // 201
     [SwaggerResponseExample(StatusCodes.Status201Created, typeof(ProxyClusterResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ProxyClusterDto), StatusCodes.Status201Created)]
+    // 400
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
-    [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
+    [RequirePermission(ApiAccess.CanUpdateSystemSettings, "apigateway:write")]
     public async Task<IActionResult> CreateCluster(
         [FromBody, SwaggerRequestBody("The cluster creation request")] CreateProxyClusterRequest request)
     {
@@ -101,13 +110,17 @@ public class ProxyClusterController(
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "UpdateCluster", Summary = "Updates an existing proxy cluster", Description = "Updates the configuration of an existing proxy cluster")]
     [SwaggerRequestExample(typeof(UpdateProxyClusterRequest), typeof(CreateProxyClusterRequestExample))]
+    // 200
     [SwaggerResponseExample(StatusCodes.Status200OK, typeof(ProxyClusterResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ProxyClusterDto), StatusCodes.Status200OK)]
+    // 400
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
+    // 404
+    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> UpdateCluster(
@@ -130,10 +143,13 @@ public class ProxyClusterController(
     [HttpDelete("{id:guid}")]
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "DeleteCluster", Summary = "Deletes a proxy cluster", Description = "Removes a proxy cluster from the system")]
-    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
+    // 204
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    // 404
+    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> DeleteCluster(

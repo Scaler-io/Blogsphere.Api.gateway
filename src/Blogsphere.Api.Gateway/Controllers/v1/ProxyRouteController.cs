@@ -34,13 +34,16 @@ public class ProxyRouteController(
     [HttpGet]
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "GetRoutes", Summary = "Retrieves all proxy routes", Description = "Returns a paginated list of all proxy routes in the system")]
+    // 200
     [SwaggerResponseExample(StatusCodes.Status200OK, typeof(PaginatedProxyRouteResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(PaginatedResult<ProxyRouteSearchableDto>), StatusCodes.Status200OK)]
+    // 400
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
-    [RequirePermission(ApiAccess.CanViewSystemSettings)]
+    [RequirePermission(ApiAccess.CanViewSystemSettings, "apigateway:read")]
     public async Task<IActionResult> GetRoutes(
         [FromQuery, SwaggerParameter("The page number")] int pageNumber = 1,
         [FromQuery, SwaggerParameter("The page size")] int pageSize = 10)
@@ -54,10 +57,14 @@ public class ProxyRouteController(
     [HttpGet("{id:guid}")]
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "GetRoute", Summary = "Retrieves a specific proxy route", Description = "Returns detailed information about a specific proxy route")]
+    // 200
     [SwaggerResponseExample(StatusCodes.Status200OK, typeof(ProxyRouteResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ProxyRouteDto), StatusCodes.Status200OK)]
+    // 404
+    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanViewSystemSettings)]
@@ -74,11 +81,14 @@ public class ProxyRouteController(
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "CreateRoute", Summary = "Creates a new proxy route", Description = "Creates a new proxy route with the specified configuration")]
     [SwaggerRequestExample(typeof(CreateProxyRouteRequest), typeof(CreateProxyRouteRequestExample))]
+    // 201
     [SwaggerResponseExample(StatusCodes.Status201Created, typeof(ProxyRouteResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ProxyRouteDto), StatusCodes.Status201Created)]
+    // 400
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> CreateRoute(
@@ -101,13 +111,15 @@ public class ProxyRouteController(
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "UpdateRoute", Summary = "Updates an existing proxy route", Description = "Updates the configuration of an existing proxy route")]
     [SwaggerRequestExample(typeof(UpdateProxyRouteRequest), typeof(CreateProxyRouteRequestExample))]
+    // 200
     [SwaggerResponseExample(StatusCodes.Status200OK, typeof(ProxyRouteResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ProxyRouteDto), StatusCodes.Status200OK)]
+    // 400
+    [SwaggerResponseExample(StatusCodes.Status400BadRequest, typeof(ValidationResponseExample))]
     [ProducesResponseType(typeof(ApiValidationResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> UpdateRoute(
@@ -130,10 +142,13 @@ public class ProxyRouteController(
     [HttpDelete("{id:guid}")]
     [SwaggerHeader("CorrelationId", Description = "Unique identifier for tracing the request through the system")]
     [SwaggerOperation(OperationId = "DeleteRoute", Summary = "Deletes a proxy route", Description = "Removes a proxy route from the system")]
-    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
-    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
+    // 204
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    // 404
+    [SwaggerResponseExample(StatusCodes.Status404NotFound, typeof(NotFoundResponseExample))]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
     [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
     [RequirePermission(ApiAccess.CanUpdateSystemSettings)]
     public async Task<IActionResult> DeleteRoute(
