@@ -12,6 +12,19 @@
         "SWAGGER_SCHEME": "http",
         "ASPNETCORE_URLS": "http://localhost:8000"
       }
+    },
+    "Debug": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:8000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SWAGGER_ENVIRONMENT_NAME": "Development",
+        "SWAGGER_SCHEME": "http",
+        "ASPNETCORE_URLS": "http://localhost:8000",
+        "DOTNET_USE_POLLING_FILE_WATCHER": "1"
+      }
     }
   }
 }
