@@ -25,6 +25,11 @@ services:
       - "IdentityGroupAccess__Authority=http://host.docker.internal:5000"
       - "IdentityGroupAccess__Audience=blogsphere.api.gateway"
       - "AllowedHosts=*"
+      - "EventBus__Host=rabbitmq"
+      - "EventBus__Username=guest"
+      - "EventBus__Password=guest"
+      - "EventBus__VirtualHost=/"
+      - "EventBus__Port=5672"
     networks:
       - blogsphere_dev_net
 

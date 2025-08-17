@@ -44,7 +44,7 @@ public class DatabaseProxyConfigProvider : IProxyConfigProvider
                         .Where(d => d.IsActive)
                         .ToDictionary(
                             d => d.DestinationId,
-                            d => new DestinationConfig { Address = d.Address }
+                            d => new DestinationConfig { Address = ResolveAddressForDocker(d.Address) }
                         );
 
                     if (destinations.Count == 0)
@@ -180,6 +180,39 @@ public class DatabaseProxyConfigProvider : IProxyConfigProvider
             "notexists" => HeaderMatchMode.NotExists,
             _ => HeaderMatchMode.ExactHeader
         };
+    }
+
+    private string ResolveAddressForDocker(string originalAddress)
+    {
+        if (string.IsNullOrEmpty(originalAddress))
+            return originalAddress;
+
+        // Check if we're running in Docker
+        var isDocker = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Docker" ||
+                      File.Exists("/.dockerenv");
+
+        if (!isDocker)
+            return originalAddress;
+
+        try
+        {
+            var uri = new Uri(originalAddress);
+            
+            // Replace localhost with host.docker.internal when in Docker
+            if (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                var resolvedAddress = originalAddress.Replace("localhost", "host.docker.internal");
+                _logger.Here().Debug("Resolved Docker address from {Original} to {Resolved}", originalAddress, resolvedAddress);
+                return resolvedAddress;
+            }
+
+            return originalAddress;
+        }
+        catch (UriFormatException ex)
+        {
+            _logger.Here().Warning(ex, "Invalid URI format for address: {Address}", originalAddress);
+            return originalAddress;
+        }
     }
 }
 
