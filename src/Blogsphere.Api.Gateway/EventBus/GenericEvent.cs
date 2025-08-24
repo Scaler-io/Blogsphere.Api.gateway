@@ -1,5 +1,3 @@
-using Blogsphere.Api.Gateway.Models.Enums;
-
 namespace Blogsphere.Api.Gateway.EventBus;
 
 public abstract class GenericEvent

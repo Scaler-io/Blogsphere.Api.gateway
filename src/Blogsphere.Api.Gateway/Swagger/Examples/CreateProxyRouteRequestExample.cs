@@ -1,4 +1,3 @@
-using Blogsphere.Api.Gateway.Models.Requests;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace Blogsphere.Api.Gateway.Swagger.Examples;

@@ -5,13 +5,32 @@
 namespace Blogsphere.Api.Gateway.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "blogsphere");
+
+            migrationBuilder.CreateTable(
+                name: "ApiProducts",
+                schema: "blogsphere",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductName = table.Column<string>(type: "text", nullable: false),
+                    ProductDescription = table.Column<string>(type: "text", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApiProducts", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "Clusters",
@@ -27,11 +46,69 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                     HealthCheckTimeout = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Clusters", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SubscribedApis",
+                schema: "blogsphere",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ApiPath = table.Column<string>(type: "text", nullable: false),
+                    ApiName = table.Column<string>(type: "text", nullable: false),
+                    ApiDescription = table.Column<string>(type: "text", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SubscribedApis", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SubscribedApis_ApiProducts_ProductId",
+                        column: x => x.ProductId,
+                        principalSchema: "blogsphere",
+                        principalTable: "ApiProducts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Subscriptions",
+                schema: "blogsphere",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubscriptionKey = table.Column<string>(type: "text", nullable: false),
+                    SubscriptionName = table.Column<string>(type: "text", nullable: true),
+                    SubscriptionDescription = table.Column<string>(type: "text", nullable: true),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Subscriptions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Subscriptions_ApiProducts_ProductId",
+                        column: x => x.ProductId,
+                        principalSchema: "blogsphere",
+                        principalTable: "ApiProducts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -45,7 +122,9 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                     ClusterId = table.Column<Guid>(type: "uuid", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -73,7 +152,9 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                     ClusterId = table.Column<Guid>(type: "uuid", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -99,7 +180,9 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                     RouteId = table.Column<Guid>(type: "uuid", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -123,7 +206,9 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                     RouteId = table.Column<Guid>(type: "uuid", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -177,6 +262,25 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SubscribedApis_ProductId",
+                schema: "blogsphere",
+                table: "SubscribedApis",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_ProductId",
+                schema: "blogsphere",
+                table: "Subscriptions",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_SubscriptionKey",
+                schema: "blogsphere",
+                table: "Subscriptions",
+                column: "SubscriptionKey",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transforms_RouteId",
                 schema: "blogsphere",
                 table: "Transforms",
@@ -195,7 +299,19 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                 schema: "blogsphere");
 
             migrationBuilder.DropTable(
+                name: "SubscribedApis",
+                schema: "blogsphere");
+
+            migrationBuilder.DropTable(
+                name: "Subscriptions",
+                schema: "blogsphere");
+
+            migrationBuilder.DropTable(
                 name: "Transforms",
+                schema: "blogsphere");
+
+            migrationBuilder.DropTable(
+                name: "ApiProducts",
                 schema: "blogsphere");
 
             migrationBuilder.DropTable(

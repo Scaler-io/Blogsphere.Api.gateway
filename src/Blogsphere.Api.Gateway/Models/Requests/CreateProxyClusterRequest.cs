@@ -1,5 +1,3 @@
-using Blogsphere.Api.Gateway.Models.Requests;
-
 public class CreateProxyClusterRequest
 {
     public string ClusterId { get; set; }

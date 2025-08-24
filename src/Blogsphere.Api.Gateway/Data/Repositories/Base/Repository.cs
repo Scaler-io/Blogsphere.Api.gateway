@@ -1,6 +1,4 @@
 using System.Linq.Expressions;
-using Blogsphere.Api.Gateway.Data.Interfaces.Base;
-using Blogsphere.Api.Gateway.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blogsphere.Api.Gateway.Data.Repositories.Base;

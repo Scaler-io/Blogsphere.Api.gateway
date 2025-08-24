@@ -1,5 +1,3 @@
-using Blogsphere.Api.Gateway.Models.Enums;
-
 namespace Blogsphere.Api.Gateway.Models.Common;
 
 public sealed class ApiValidationResponse : ApiResponse

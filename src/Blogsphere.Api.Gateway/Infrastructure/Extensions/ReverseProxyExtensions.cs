@@ -1,4 +1,3 @@
-using Blogsphere.Api.Gateway.Infrastructure.Yarp;
 using Yarp.ReverseProxy.Configuration;
 
 namespace Blogsphere.Api.Gateway.Infrastructure.Extensions;

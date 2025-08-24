@@ -1,7 +1,3 @@
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Models.Enums;
-using Blogsphere.Api.Gateway.Services.Interfaces;
-
 namespace Blogsphere.Api.Gateway.Services.Security;
 
 public class PermissionMapper : IPermissionMapper

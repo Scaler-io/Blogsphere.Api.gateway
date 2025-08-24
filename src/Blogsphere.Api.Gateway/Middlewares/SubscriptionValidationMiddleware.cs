@@ -1,6 +1,3 @@
-using Blogsphere.Api.Gateway.Services;
-using Blogsphere.Api.Gateway.Models.Common;
-
 namespace Blogsphere.Api.Gateway.Middlewares;
 
 public class SubscriptionValidationMiddleware(ILogger logger, ISubscriptionService validator) : IMiddleware

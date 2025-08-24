@@ -1,6 +1,3 @@
-using Blogsphere.Api.Gateway.Data.Interfaces;
-using Blogsphere.Api.Gateway.Data.Interfaces.Repositories;
-using Blogsphere.Api.Gateway.Data.Context;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Blogsphere.Api.Gateway.Data.UnitOfWork;

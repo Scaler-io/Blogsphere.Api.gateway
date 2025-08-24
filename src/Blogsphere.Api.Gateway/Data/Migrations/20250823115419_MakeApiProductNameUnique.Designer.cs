@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blogsphere.Api.Gateway.Data.Migrations
 {
     [DbContext(typeof(ProxyConfigContext))]
-    [Migration("20250716121115_AddsCreatedByAndUpdatedByCols")]
-    partial class AddsCreatedByAndUpdatedByCols
+    [Migration("20250823115419_MakeApiProductNameUnique")]
+    partial class MakeApiProductNameUnique
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,43 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.ApiProduct", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ProductDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductName")
+                        .IsUnique();
+
+                    b.ToTable("ApiProducts", "blogsphere");
+                });
 
             modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.ProxyCluster", b =>
                 {
@@ -255,6 +292,93 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                     b.ToTable("Transforms", "blogsphere");
                 });
 
+            modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.SubscribedApi", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApiDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApiName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApiPath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("SubscribedApis", "blogsphere");
+                });
+
+            modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.Subscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SubscriptionDescription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubscriptionKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubscriptionName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SubscriptionKey")
+                        .IsUnique();
+
+                    b.ToTable("Subscriptions", "blogsphere");
+                });
+
             modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.ProxyDestination", b =>
                 {
                     b.HasOne("Blogsphere.Api.Gateway.Entity.ProxyCluster", "Cluster")
@@ -297,6 +421,35 @@ namespace Blogsphere.Api.Gateway.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Route");
+                });
+
+            modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.SubscribedApi", b =>
+                {
+                    b.HasOne("Blogsphere.Api.Gateway.Entity.ApiProduct", "ApiProduct")
+                        .WithMany("SubscribedApis")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApiProduct");
+                });
+
+            modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.Subscription", b =>
+                {
+                    b.HasOne("Blogsphere.Api.Gateway.Entity.ApiProduct", "ApiProduct")
+                        .WithMany("Subscriptions")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApiProduct");
+                });
+
+            modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.ApiProduct", b =>
+                {
+                    b.Navigation("SubscribedApis");
+
+                    b.Navigation("Subscriptions");
                 });
 
             modelBuilder.Entity("Blogsphere.Api.Gateway.Entity.ProxyCluster", b =>

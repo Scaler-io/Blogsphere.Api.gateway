@@ -1,8 +1,5 @@
 using System.Net;
 using System.Net.Mime;
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Models.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;

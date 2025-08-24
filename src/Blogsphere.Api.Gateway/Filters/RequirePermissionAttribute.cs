@@ -1,7 +1,3 @@
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Models.Enums;
-using Blogsphere.Api.Gateway.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 

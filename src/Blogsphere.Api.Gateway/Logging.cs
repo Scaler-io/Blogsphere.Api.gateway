@@ -1,4 +1,3 @@
-using Blogsphere.Api.Gateway.Configurations;
 using Destructurama;
 using Serilog.Core;
 using Serilog.Sinks.SystemConsole.Themes;

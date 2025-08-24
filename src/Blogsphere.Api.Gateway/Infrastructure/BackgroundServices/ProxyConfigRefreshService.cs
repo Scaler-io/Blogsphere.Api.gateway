@@ -1,5 +1,3 @@
-using Blogsphere.Api.Gateway.Infrastructure.Yarp;
-
 namespace Blogsphere.Api.Gateway.Infrastructure.BackgroundServices;
 
 public class ProxyConfigRefreshService(

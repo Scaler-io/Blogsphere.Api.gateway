@@ -1,9 +1,5 @@
-using Blogsphere.Api.Gateway.Entity;
-using Blogsphere.Api.Gateway.EventBus;
-using Blogsphere.Api.Gateway.Services.Interfaces;
 using MassTransit;
 using AutoMapper;
-using Blogsphere.Api.Gateway.Extensions;
 
 namespace Blogsphere.Api.Gateway.Services;
 

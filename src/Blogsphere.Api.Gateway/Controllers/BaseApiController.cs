@@ -1,8 +1,4 @@
 using System.Net;
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Models.Enums;
-using Blogsphere.Api.Gateway.Services.Interfaces;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,7 +8,7 @@ namespace Blogsphere.Api.Gateway.Controllers;
 [Route("api/v{version:apiVersion}/[controller]")]
 public class BaseApiController(ILogger logger, IIdentityService identityService) : ControllerBase
 {
-    private ILogger Logger { get; set; } = logger;
+    protected ILogger Logger { get; set; } = logger;
     private readonly IIdentityService _identityService = identityService;
     protected RequestInformation RequestInformation => new()
     {

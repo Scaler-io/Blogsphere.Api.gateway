@@ -1,4 +1,3 @@
-using Blogsphere.Api.Gateway.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

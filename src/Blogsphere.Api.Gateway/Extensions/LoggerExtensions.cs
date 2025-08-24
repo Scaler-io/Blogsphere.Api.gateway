@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Blogsphere.Api.Gateway.Models.Constants;
 
 namespace Blogsphere.Api.Gateway.Extensions;
 
@@ -31,5 +30,20 @@ public static class LoggerExtensions
     public static ILogger WithCorrelationId(this ILogger logger, string correlationId)
     {
         return logger.ForContext(LoggerConstants.CorrelationId, correlationId);
+    }
+
+    public static ILogger WithApiProductId(this ILogger logger, object apiProductId)
+    {
+        return logger.ForContext(LoggerConstants.ApiProductId, apiProductId);
+    }
+
+    public static ILogger WithSubscribedApiId(this ILogger logger, object subscribedApiId)
+    {
+        return logger.ForContext(LoggerConstants.SubscribedApiId, subscribedApiId);
+    }
+
+    public static ILogger WithSubscriptionId(this ILogger logger, object subscriptionId)
+    {
+        return logger.ForContext(LoggerConstants.SubscriptionId, subscriptionId);
     }
 }

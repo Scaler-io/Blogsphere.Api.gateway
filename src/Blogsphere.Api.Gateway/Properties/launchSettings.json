@@ -23,7 +23,24 @@
         "SWAGGER_ENVIRONMENT_NAME": "Development",
         "SWAGGER_SCHEME": "http",
         "ASPNETCORE_URLS": "http://localhost:8000",
-        "DOTNET_USE_POLLING_FILE_WATCHER": "1"
+        "DOTNET_USE_POLLING_FILE_WATCHER": "1",
+        "DOTNET_MODIFIABLE_ASSEMBLIES": "debug",
+        "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"
+      }
+    },
+    "VSCode": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:8000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SWAGGER_ENVIRONMENT_NAME": "Development",
+        "SWAGGER_SCHEME": "http",
+        "ASPNETCORE_URLS": "http://localhost:8000",
+        "DOTNET_USE_POLLING_FILE_WATCHER": "1",
+        "DOTNET_MODIFIABLE_ASSEMBLIES": "debug",
+        "COMPlus_ZapDisable": "1"
       }
     }
   }
