@@ -1,4 +1,3 @@
-using Blogsphere.Api.Gateway.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blogsphere.Api.Gateway.Data.Context;
@@ -12,6 +11,9 @@ public class ProxyConfigContext(DbContextOptions<ProxyConfigContext> options) : 
     public DbSet<ProxyDestination> Destinations { get; set; }
     public DbSet<ProxyHeader> Headers { get; set; }
     public DbSet<ProxyTransform> Transforms { get; set; }
+    public DbSet<ApiProduct> ApiProducts { get; set; }
+    public DbSet<SubscribedApi> SubscribedApis { get; set; }
+    public DbSet<Subscription> Subscriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

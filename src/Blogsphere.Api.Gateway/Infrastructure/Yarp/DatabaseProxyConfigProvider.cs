@@ -1,6 +1,3 @@
-using Blogsphere.Api.Gateway.Data.Interfaces;
-using Blogsphere.Api.Gateway.Entity;
-using Blogsphere.Api.Gateway.Extensions;
 using Microsoft.Extensions.Primitives;
 using System.Linq.Expressions;
 using Yarp.ReverseProxy.Configuration;

@@ -1,6 +1,4 @@
-using Blogsphere.Api.Gateway.Models.Common;
 using Swashbuckle.AspNetCore.Filters;
-using Blogsphere.Api.Gateway.Models.Enums;
 
 namespace Blogsphere.Api.Gateway.Swagger.Examples;
 

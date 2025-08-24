@@ -1,5 +1,3 @@
-using Blogsphere.Api.Gateway.Data.Interfaces.Repositories;
-
 namespace Blogsphere.Api.Gateway.Data.Interfaces;
 
 public interface IUnitOfWork : IDisposable

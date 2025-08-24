@@ -1,7 +1,3 @@
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Models.DTOs;
-using Blogsphere.Api.Gateway.Services.Interfaces;
-
 namespace Blogsphere.Api.Gateway.Data.Seeding;
 
 public class ProxyConfigSeeder(

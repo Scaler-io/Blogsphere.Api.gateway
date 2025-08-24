@@ -1,5 +1,4 @@
 using AutoMapper;
-using Blogsphere.Api.Gateway.Entity;
 using Contracts.Events;
 
 namespace Blogsphere.Api.Gateway.Models.Mappings;

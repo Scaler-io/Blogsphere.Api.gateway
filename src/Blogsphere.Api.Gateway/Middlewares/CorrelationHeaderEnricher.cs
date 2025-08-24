@@ -1,5 +1,3 @@
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Models.Constants;
 using Serilog.Context;
 
 namespace Blogsphere.Api.Gateway.Middlewares;

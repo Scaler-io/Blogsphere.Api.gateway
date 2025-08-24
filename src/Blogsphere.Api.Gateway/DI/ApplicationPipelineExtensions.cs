@@ -1,8 +1,4 @@
 using Asp.Versioning.ApiExplorer;
-using Blogsphere.Api.Gateway.Data.Seeding;
-using Blogsphere.Api.Gateway.Middlewares;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Swagger;
 using Scalar.AspNetCore;
 
 namespace Blogsphere.Api.Gateway.DI;

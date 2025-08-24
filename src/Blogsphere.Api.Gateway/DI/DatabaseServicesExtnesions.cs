@@ -1,9 +1,3 @@
-using Blogsphere.Api.Gateway.Data.Context;
-using Blogsphere.Api.Gateway.Data.Interfaces;
-using Blogsphere.Api.Gateway.Data.Interfaces.Repositories;
-using Blogsphere.Api.Gateway.Data.Repositories;
-using Blogsphere.Api.Gateway.Data.Seeding;
-using Blogsphere.Api.Gateway.Data.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blogsphere.Api.Gateway.DI;
@@ -29,6 +23,7 @@ public static class DatabaseServicesExtnesions
         services.AddScoped<IProxyDestinationRepository, ProxyDestinationRepository>();
         services.AddScoped<IProxyHeaderRepository, ProxyHeaderRepository>();
         services.AddScoped<IProxyTransformRepository, ProxyTransformRepository>();
+        services.AddScoped(typeof(ISubscriptionRepository<>), typeof(SubscriptionRepository<>));
 
         // Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();

@@ -1,16 +1,5 @@
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
-using Blogsphere.Api.Gateway.Configurations;
-using Blogsphere.Api.Gateway.Infrastructure.BackgroundServices;
-using Blogsphere.Api.Gateway.Infrastructure.Extensions;
-using Blogsphere.Api.Gateway.Middlewares;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Services;
-using Blogsphere.Api.Gateway.Services.Factory;
-using Blogsphere.Api.Gateway.Services.Interfaces;
-using Blogsphere.Api.Gateway.Services.Security;
-using Blogsphere.Api.Gateway.Swagger;
-using Blogsphere.Api.Gateway.Swagger.Examples;
 using FluentValidation.AspNetCore;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using Blogsphere.Api.Gateway.Entity;
 
 namespace Blogsphere.Api.Gateway.Data.Interfaces.Base;
 

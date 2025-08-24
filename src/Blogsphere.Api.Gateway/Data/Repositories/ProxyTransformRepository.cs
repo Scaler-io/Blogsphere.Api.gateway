@@ -1,7 +1,3 @@
-using Blogsphere.Api.Gateway.Data.Interfaces.Repositories;
-using Blogsphere.Api.Gateway.Data.Repositories.Base;
-using Blogsphere.Api.Gateway.Entity;
-using Blogsphere.Api.Gateway.Data.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blogsphere.Api.Gateway.Data.Repositories;

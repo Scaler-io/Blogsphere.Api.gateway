@@ -1,20 +1,9 @@
 using System.Net;
 using Asp.Versioning;
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Infrastructure.Yarp;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Models.DTOs;
-using Blogsphere.Api.Gateway.Models.Requests;
-using Blogsphere.Api.Gateway.Services.Interfaces;
-using Blogsphere.Api.Gateway.Swagger.Examples;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
-using Blogsphere.Api.Gateway.Swagger;
-using Blogsphere.Api.Gateway.Filters;
-using Blogsphere.Api.Gateway.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
-using Blogsphere.Api.Gateway.Models.DTOs.Search;
 
 namespace Blogsphere.Api.Gateway.Controllers.v1;
 

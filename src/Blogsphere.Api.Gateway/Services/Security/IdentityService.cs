@@ -1,7 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 

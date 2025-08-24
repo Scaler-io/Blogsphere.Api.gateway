@@ -1,5 +1,4 @@
 using Blogsphere.Api.Gateway;
-using Blogsphere.Api.Gateway.DI;
 
 var builder = WebApplication.CreateBuilder(args);
 

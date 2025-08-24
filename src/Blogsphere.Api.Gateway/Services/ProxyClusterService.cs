@@ -1,14 +1,4 @@
 using AutoMapper;
-using Blogsphere.Api.Gateway.Data.Interfaces;
-using Blogsphere.Api.Gateway.Data.Interfaces.Repositories;
-using Blogsphere.Api.Gateway.Entity;
-using Blogsphere.Api.Gateway.Extensions;
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Models.DTOs;
-using Blogsphere.Api.Gateway.Models.DTOs.Search;
-using Blogsphere.Api.Gateway.Models.Enums;
-using Blogsphere.Api.Gateway.Models.Requests;
-using Blogsphere.Api.Gateway.Services.Interfaces;
 using Contracts.Events;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,8 +1,4 @@
 using AutoMapper;
-using Blogsphere.Api.Gateway.Entity;
-using Blogsphere.Api.Gateway.Models.DTOs;
-using Blogsphere.Api.Gateway.Models.DTOs.Search;
-using Blogsphere.Api.Gateway.Models.Requests;
 
 namespace Blogsphere.Api.Gateway.Models.Mappings;
 

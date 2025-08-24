@@ -1,8 +1,3 @@
-using Blogsphere.Api.Gateway.Models.Common;
-using Blogsphere.Api.Gateway.Models.DTOs;
-using Blogsphere.Api.Gateway.Models.DTOs.Search;
-using Blogsphere.Api.Gateway.Models.Requests;
-
 namespace Blogsphere.Api.Gateway.Services.Interfaces;
 
 public interface IProxyRouteService
