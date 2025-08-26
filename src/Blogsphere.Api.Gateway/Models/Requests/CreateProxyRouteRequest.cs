@@ -34,12 +34,12 @@ public class ProxyHeaderRequest
     public string[] Values { get; set; }
     
     public string Mode { get; set; } = "Set";
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
 }
 
 public class ProxyTransformRequest
 {
     [Required]
     public string PathPattern { get; set; }
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
 } 

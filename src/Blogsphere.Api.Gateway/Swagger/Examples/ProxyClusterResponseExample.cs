@@ -12,8 +12,13 @@ public class ProxyClusterResponseExample : IExamplesProvider<ProxyClusterDto>
             ClusterId = "backend-services",
             LoadBalancingPolicy = "RoundRobin",
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            Metadata = new MetaDataDto
+            {
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                CreatedBy = "test",
+                UpdatedBy = "test"
+            },
             Destinations =
             [
                 new()
@@ -21,18 +26,14 @@ public class ProxyClusterResponseExample : IExamplesProvider<ProxyClusterDto>
                     Id = Guid.NewGuid(),
                     DestinationId = "backend-1",
                     Address = "https://backend1.example.com",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    IsActive = true
                 },
                 new()
                 {
                     Id = Guid.NewGuid(),
                     DestinationId = "backend-2",
                     Address = "https://backend2.example.com",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    IsActive = true
                 }
             ]
         };

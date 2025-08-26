@@ -27,10 +27,6 @@ public class ProxyRouteConfiguration : IEntityTypeConfiguration<ProxyRoute>
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<string[]>(v, (JsonSerializerOptions)null));
 
-        builder.Property(x => x.Metadata)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, (JsonSerializerOptions)null));
 
         builder.Property(x => x.ClusterId).IsRequired();
 

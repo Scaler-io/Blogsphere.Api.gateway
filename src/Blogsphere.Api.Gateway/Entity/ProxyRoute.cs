@@ -6,7 +6,6 @@ public class ProxyRoute : EntityBase
     public string Path { get; set; }
     public string[] Methods { get; set; }
     public string RateLimiterPolicy { get; set; }
-    public Dictionary<string, string> Metadata { get; set; }
     public Guid ClusterId { get; set; }
     public ProxyCluster Cluster { get; set; }
     public ICollection<ProxyHeader> Headers { get; set; } = [];

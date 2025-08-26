@@ -13,15 +13,15 @@ public class ProxyRouteResponseExample : IExamplesProvider<ProxyRouteDto>
             Path = "/api/blog/{**catch-all}",
             Methods = ["GET", "POST", "PUT", "DELETE"],
             RateLimiterPolicy = "default",
-            Metadata = new Dictionary<string, string>
+            Metadata = new MetaDataDto
             {
-                { "Version", "1.0" },
-                { "Environment", "Production" }
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                CreatedBy = "test",
+                UpdatedBy = "test"
             },
             IsActive = true,
             ClusterId = Guid.NewGuid(),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
             Headers = [
                 new ProxyHeaderDto
                 {

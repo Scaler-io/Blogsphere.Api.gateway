@@ -54,7 +54,7 @@ public class ProxyRouteService(
     public async Task<Result<ProxyRouteDto>> GetByIdAsync(Guid id)
     {
         _logger.Here().MethodEntered();
-        var entity = await _repository.GetByIdAsync(id);
+        var entity = await _repository.Include(GetDefaultIncludes()).FirstOrDefaultAsync(r => r.Id == id);
         if (entity == null)
         {
             _logger.Here().Warning("Route with ID {Id} not found", id);
@@ -84,16 +84,6 @@ public class ProxyRouteService(
         }
         
         var entity = _mapper.Map<ProxyRoute>(dto);
-        var utcNow = DateTime.UtcNow;
-        entity.CreatedAt = utcNow;
-        entity.UpdatedAt = utcNow;
-        
-        // Set audit fields from RequestInformation
-        if (requestInfo?.CurrentUser?.Id != null)
-        {
-            entity.CreatedBy = requestInfo.CurrentUser.Id;
-            entity.UpdatedBy = requestInfo.CurrentUser.Id;
-        }
         
         await _repository.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
@@ -118,7 +108,7 @@ public class ProxyRouteService(
         }
 
         _logger.Here().Information("Created route with ID {Id}", entity.Id);
-        _logger.Here().MethodExited();
+        _logger.Here().MethodExited();      
         return Result<ProxyRouteDto>.Success(resultDto);
     }
 
@@ -188,8 +178,11 @@ public class ProxyRouteService(
         // Set system properties
         dto.Id = Guid.NewGuid();
         dto.IsActive = true;
-        dto.CreatedAt = DateTime.UtcNow;
-        dto.UpdatedAt = DateTime.UtcNow;
+        dto.Metadata = new MetaDataDto
+        {
+            CreatedBy = requestInfo.CurrentUser.Id,
+            UpdatedBy = requestInfo.CurrentUser.Id
+        };
 
         // Map headers if provided
         if (request.Headers != null)
@@ -198,6 +191,12 @@ public class ProxyRouteService(
             foreach (var header in dto.Headers)
             {
                 header.Id = Guid.NewGuid();
+                header.IsActive = true;
+                header.Metadata = new MetaDataDto
+                {
+                    CreatedBy = requestInfo.CurrentUser.Id,
+                    UpdatedBy = requestInfo.CurrentUser.Id
+                };
             }
         }
 
@@ -208,6 +207,12 @@ public class ProxyRouteService(
             foreach (var transform in dto.Transforms)
             {
                 transform.Id = Guid.NewGuid();
+                transform.IsActive = true;
+                transform.Metadata = new MetaDataDto
+                {
+                    CreatedBy = requestInfo.CurrentUser.Id,
+                    UpdatedBy = requestInfo.CurrentUser.Id
+                };
             }
         }
 
@@ -232,7 +237,11 @@ public class ProxyRouteService(
         // Map request to DTO using AutoMapper
         var dto = _mapper.Map<ProxyRouteDto>(request);
         dto.Id = id;
-        dto.UpdatedAt = DateTime.UtcNow;
+        dto.IsActive = request.IsActive;
+        dto.Metadata = new MetaDataDto
+        {
+            UpdatedBy = requestInfo.CurrentUser.Id
+        };
         
         // Handle nullable ClusterId properly
         if (request.ClusterId.HasValue)
@@ -255,12 +264,26 @@ public class ProxyRouteService(
         if (request.Headers != null)
         {
             dto.Headers = _mapper.Map<List<ProxyHeaderDto>>(request.Headers);
+            foreach (var header in dto.Headers)
+            {
+                header.Metadata = new MetaDataDto
+                {
+                    UpdatedBy = requestInfo.CurrentUser.Id
+                };
+            }
         }
 
         // Map transforms if provided
         if (request.Transforms != null)
         {
             dto.Transforms = _mapper.Map<List<ProxyTransformDto>>(request.Transforms);
+            foreach (var transform in dto.Transforms)
+            {
+                transform.Metadata = new MetaDataDto
+                {
+                    UpdatedBy = requestInfo.CurrentUser.Id
+                };
+            }
         }
 
         // Use the smart update logic
@@ -281,15 +304,8 @@ public class ProxyRouteService(
         if (dto.Path != null) entity.Path = dto.Path;
         if (dto.Methods != null) entity.Methods = dto.Methods;
         if (dto.RateLimiterPolicy != null) entity.RateLimiterPolicy = dto.RateLimiterPolicy;
-        if (dto.Metadata != null) entity.Metadata = dto.Metadata;
         if (dto.ClusterId != Guid.Empty) entity.ClusterId = dto.ClusterId;
-        entity.UpdatedAt = DateTime.UtcNow;
-        
-        // Set UpdatedBy from RequestInformation
-        if (requestInfo?.CurrentUser?.Id != null)
-        {
-            entity.UpdatedBy = requestInfo.CurrentUser.Id;
-        }
+        entity.IsActive = dto.IsActive;
 
         _repository.Update(entity);
         await _unitOfWork.SaveChangesAsync();
@@ -311,14 +327,8 @@ public class ProxyRouteService(
                 // Update existing header
                 existingHeader.Values = headerDto.Values ?? existingHeader.Values;
                 existingHeader.Mode = headerDto.Mode ?? existingHeader.Mode;
-                existingHeader.IsActive = true;
-                existingHeader.UpdatedAt = DateTime.UtcNow;
-                
-                // Set UpdatedBy from RequestInformation
-                if (requestInfo?.CurrentUser?.Id != null)
-                {
-                    existingHeader.UpdatedBy = requestInfo.CurrentUser.Id;
-                }
+                existingHeader.IsActive = headerDto.IsActive;
+
                 
                 _unitOfWork.Headers.Update(existingHeader);
             }
@@ -332,17 +342,12 @@ public class ProxyRouteService(
                     Values = headerDto.Values,
                     Mode = headerDto.Mode,
                     RouteId = routeId,
-                    IsActive = true,
+                    IsActive = headerDto.IsActive,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedBy = requestInfo.CurrentUser.Id,
+                    UpdatedBy = requestInfo.CurrentUser.Id
                 };
-                
-                // Set audit fields from RequestInformation
-                if (requestInfo?.CurrentUser?.Id != null)
-                {
-                    newHeader.CreatedBy = requestInfo.CurrentUser.Id;
-                    newHeader.UpdatedBy = requestInfo.CurrentUser.Id;
-                }
                 
                 await _unitOfWork.Headers.AddAsync(newHeader);
             }
@@ -374,14 +379,7 @@ public class ProxyRouteService(
             if (existingTransform != null)
             {
                 // Update existing transform
-                existingTransform.IsActive = true;
-                existingTransform.UpdatedAt = DateTime.UtcNow;
-                
-                // Set UpdatedBy from RequestInformation
-                if (requestInfo?.CurrentUser?.Id != null)
-                {
-                    existingTransform.UpdatedBy = requestInfo.CurrentUser.Id;
-                }
+                existingTransform.IsActive = transformDto.IsActive;
                 
                 _unitOfWork.Transforms.Update(existingTransform);
             }
@@ -393,17 +391,12 @@ public class ProxyRouteService(
                     Id = Guid.NewGuid(),
                     PathPattern = transformDto.PathPattern,
                     RouteId = routeId,
-                    IsActive = true,
+                    IsActive = transformDto.IsActive,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-                
-                // Set audit fields from RequestInformation
-                if (requestInfo?.CurrentUser?.Id != null)
-                {
-                    newTransform.CreatedBy = requestInfo.CurrentUser.Id;
-                    newTransform.UpdatedBy = requestInfo.CurrentUser.Id;
-                }
+                    UpdatedAt = DateTime.UtcNow,
+                    CreatedBy = requestInfo.CurrentUser.Id,
+                    UpdatedBy = requestInfo.CurrentUser.Id
+                };     
                 
                 await _unitOfWork.Transforms.AddAsync(newTransform);
             }

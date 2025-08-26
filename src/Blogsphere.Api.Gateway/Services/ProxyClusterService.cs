@@ -82,20 +82,48 @@ public class ProxyClusterService(
         _logger.Here().MethodExited();
         return Result<ProxyClusterDto>.Success(dto);
     }
+    public async Task<Result<ProxyClusterDto>> CreateFromRequestAsync(CreateProxyClusterRequest request, RequestInformation requestInfo)
+    {
+        _logger.Here().MethodEntered();
 
+        // Map request to DTO using AutoMapper
+        var dto = _mapper.Map<ProxyClusterDto>(request);
+
+        // Set system properties
+        dto.Id = Guid.NewGuid();
+        dto.IsActive = true;
+        dto.Metadata = new MetaDataDto
+        {
+            CreatedBy = requestInfo.CurrentUser.Id,
+            UpdatedBy = requestInfo.CurrentUser.Id
+        };
+
+        // Map destinations if provided
+        if (request.Destinations != null)
+        {
+            dto.Destinations = _mapper.Map<List<ProxyDestinationDto>>(request.Destinations);
+            foreach (var dest in dto.Destinations)
+            {
+                dest.Id = Guid.NewGuid();
+                dest.ClusterId = dto.Id;
+                dest.IsActive = true;
+                dest.Metadata = new MetaDataDto
+                {
+                    CreatedBy = requestInfo.CurrentUser.Id,
+                    UpdatedBy = requestInfo.CurrentUser.Id
+                };
+            }
+        }
+
+        // Use the existing CreateAsync method
+        var result = await CreateAsync(dto, requestInfo);
+        _logger.Here().MethodExited();
+        return result;
+    }
     public async Task<Result<ProxyClusterDto>> CreateAsync(ProxyClusterDto dto, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
         var entity = _mapper.Map<ProxyCluster>(dto);
-        entity.CreatedAt = DateTime.UtcNow;
-        entity.UpdatedAt = DateTime.UtcNow;
-
-        // Set audit fields from RequestInformation
-        if (requestInfo?.CurrentUser?.Id != null)
-        {
-            entity.CreatedBy = requestInfo.CurrentUser.Id;
-            entity.UpdatedBy = requestInfo.CurrentUser.Id;
-        }
 
         await _repository.AddAsync(entity);
         await _unitOfWork.SaveChangesAsync();
@@ -145,40 +173,7 @@ public class ProxyClusterService(
         return Result<ProxyClusterDto>.Success(resultDto);
     }
 
-    public async Task<Result<ProxyClusterDto>> CreateFromRequestAsync(CreateProxyClusterRequest request, RequestInformation requestInfo)
-    {
-        _logger.Here().MethodEntered();
-
-        // Map request to DTO using AutoMapper
-        var dto = _mapper.Map<ProxyClusterDto>(request);
-
-        // Set system properties
-        dto.Id = Guid.NewGuid();
-        dto.IsActive = true;
-        dto.CreatedAt = DateTime.UtcNow;
-        dto.UpdatedAt = DateTime.UtcNow;
-
-        // Map destinations if provided
-        if (request.Destinations != null)
-        {
-            dto.Destinations = _mapper.Map<List<ProxyDestinationDto>>(request.Destinations);
-            foreach (var dest in dto.Destinations)
-            {
-                dest.Id = Guid.NewGuid();
-                dest.ClusterId = dto.Id;
-                dest.IsActive = true;
-                dest.CreatedAt = DateTime.UtcNow;
-                dest.UpdatedAt = DateTime.UtcNow;
-                dest.CreatedBy = requestInfo.CurrentUser.Id;
-                dest.UpdatedBy = requestInfo.CurrentUser.Id;
-            }
-        }
-
-        // Use the existing CreateAsync method
-        var result = await CreateAsync(dto, requestInfo);
-        _logger.Here().MethodExited();
-        return result;
-    }
+    
 
     public async Task<Result<ProxyClusterDto>> UpdateFromRequestAsync(Guid id, UpdateProxyClusterRequest request, RequestInformation requestInfo)
     {
@@ -195,7 +190,10 @@ public class ProxyClusterService(
         // Map request to DTO using AutoMapper
         var dto = _mapper.Map<ProxyClusterDto>(request);
         dto.Id = id;
-        dto.UpdatedAt = DateTime.UtcNow;
+        dto.Metadata = new MetaDataDto
+        {
+            UpdatedBy = requestInfo.CurrentUser.Id
+        };
 
         // Handle explicit destination removals first
         if (request.RemoveDestinations != null && request.RemoveDestinations.Any())
@@ -210,6 +208,10 @@ public class ProxyClusterService(
             foreach (var dest in dto.Destinations)
             {
                 dest.ClusterId = id;
+                dest.Metadata = new MetaDataDto
+                {
+                    UpdatedBy = requestInfo.CurrentUser.Id
+                };
             }
         }
 

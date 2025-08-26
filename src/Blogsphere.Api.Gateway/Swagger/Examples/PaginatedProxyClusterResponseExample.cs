@@ -19,7 +19,13 @@ public class PaginatedProxyClusterResponseExample : IExamplesProvider<PaginatedR
                     HealthCheckInterval = 30,
                     HealthCheckTimeout = 10,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
+                    Metadata = new MetaDataDto
+                    {
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        CreatedBy = "test",
+                        UpdatedBy = "test"
+                    },
                     Destinations = [
                         new ProxyDestinationDto
                         {
@@ -27,7 +33,6 @@ public class PaginatedProxyClusterResponseExample : IExamplesProvider<PaginatedR
                             DestinationId = "blog-api-1",
                             Address = "http://blog-api-1:8080",
                             IsActive = true,
-                            CreatedAt = DateTime.UtcNow
                         }
                     ]
                 },
@@ -41,7 +46,13 @@ public class PaginatedProxyClusterResponseExample : IExamplesProvider<PaginatedR
                     HealthCheckInterval = 30,
                     HealthCheckTimeout = 10,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
+                    Metadata = new MetaDataDto
+                    {
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        CreatedBy = "test",
+                        UpdatedBy = "test"
+                    },
                     Destinations = [
                         new ProxyDestinationDto
                         {
@@ -49,7 +60,6 @@ public class PaginatedProxyClusterResponseExample : IExamplesProvider<PaginatedR
                             DestinationId = "blog-api-2",
                             Address = "http://blog-api-2:8080",
                             IsActive = true,
-                            CreatedAt = DateTime.UtcNow
                         }
                     ]
                 }

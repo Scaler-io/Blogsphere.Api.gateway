@@ -8,17 +8,25 @@ A dynamic, configurable API Gateway built with .NET 8 and YARP (Yet Another Reve
 - 🔒 Built-in security features and headers
 - 📊 Rate limiting and request throttling
 - 🔄 Real-time configuration updates
-- 📝 Comprehensive logging with Serilog
+- 📝 Comprehensive logging with Serilog and Elasticsearch
 - 📈 OpenTelemetry integration with Zipkin
 - 🗄️ PostgreSQL for configuration storage
-- 🔍 Swagger/OpenAPI documentation
+- 🔍 Swagger/OpenAPI documentation with Scalar UI
 - 🎯 Health check endpoints
 - 🌐 CORS support
+- 📦 API product and subscription management
+- 🔐 Role-based access control with JWT authentication
+- 📡 Event-driven architecture with MassTransit and RabbitMQ
+- 🏗️ Clean architecture with repository pattern
+- 📋 Comprehensive API documentation with examples
 
 ## Prerequisites
 
 - .NET 8.0 SDK
 - PostgreSQL 13+
+- RabbitMQ (for event bus)
+- Elasticsearch (for logging - optional)
+- Zipkin (for distributed tracing - optional)
 - Docker (optional)
 - Git
 
@@ -31,14 +39,35 @@ git clone https://github.com/your-org/blogsphere-api-gateway.git
 cd blogsphere-api-gateway
 ```
 
-### 2. Configure Database
+### 2. Configure Application Settings
 
-Update the connection string in `appsettings.json`:
+Update the configuration in `appsettings.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=blogsphere;Username=your_username;Password=your_password"
+    "DefaultConnection": "Server=localhost;Database=BlogsphereProxy;Username=admin;Password=admin"
+  },
+  "AppConfigurations": {
+    "ApplicationIdentifier": "Blogsphere.Api.Gateway",
+    "ApplicationEnvironment": "Development"
+  },
+  "EventBus": {
+    "Host": "localhost",
+    "Username": "guest",
+    "Password": "guest",
+    "VirtualHost": "/",
+    "Port": 5672
+  },
+  "Elasticsearch": {
+    "Uri": "http://localhost:9200"
+  },
+  "Zipkin": {
+    "Url": "http://localhost:9411/api/v2/spans"
+  },
+  "IdentityGroupAccess": {
+    "Authority": "http://localhost:5000",
+    "Audience": "blogsphere.api.gateway"
   }
 }
 ```
@@ -58,8 +87,9 @@ dotnet run
 
 The API Gateway will be available at:
 
-- API: http://localhost:5000
-- Swagger UI: http://localhost:5000/swagger
+- API: http://localhost:8000
+- Swagger UI: http://localhost:8000/swagger
+- Scalar API Documentation: http://localhost:8000/scalar/v1
 
 ## Configuration
 
@@ -106,58 +136,85 @@ builder.Services.AddRateLimiter(options =>
 ### Base URL
 
 ```
-http://localhost:5000/api/v1
+http://localhost:8000/api/v1
 ```
 
 ### Key Endpoints
 
-#### Clusters Management
+#### Proxy Management
+
+**Clusters Management**
 
 ```http
-GET    /clusters            # List all clusters
-GET    /clusters/{id}       # Get cluster by ID
-POST   /clusters           # Create cluster
-PUT    /clusters/{id}      # Update cluster
-DELETE /clusters/{id}      # Delete cluster
+GET    /api/v1/proxycluster            # List all proxy clusters
+GET    /api/v1/proxycluster/{id}       # Get cluster by ID
+POST   /api/v1/proxycluster           # Create cluster
+PUT    /api/v1/proxycluster/{id}      # Update cluster
+DELETE /api/v1/proxycluster/{id}      # Delete cluster
 ```
 
-Request Headers:
+**Routes Management**
 
-- `CorrelationId`: Required for request tracing
+```http
+GET    /api/v1/proxyroute            # List all proxy routes
+GET    /api/v1/proxyroute/{id}       # Get route by ID
+POST   /api/v1/proxyroute           # Create route
+PUT    /api/v1/proxyroute/{id}      # Update route
+DELETE /api/v1/proxyroute/{id}      # Delete route
+```
+
+**Configuration Management**
+
+```http
+POST   /api/v1/proxyconfiguration/refresh     # Force configuration refresh
+```
+
+#### Subscription Management
+
+**API Products**
+
+```http
+GET    /api/v1/apiproduct            # List all API products
+GET    /api/v1/apiproduct/{id}       # Get API product by ID
+POST   /api/v1/apiproduct           # Create API product
+DELETE /api/v1/apiproduct/{id}      # Delete API product
+```
+
+**Subscriptions**
+
+```http
+GET    /api/v1/subscription            # List all subscriptions
+GET    /api/v1/subscription/{id}       # Get subscription by ID
+POST   /api/v1/subscription           # Create subscription
+DELETE /api/v1/subscription/{id}      # Delete subscription
+```
+
+**Subscribed APIs**
+
+```http
+GET    /api/v1/subscribedapi            # List all subscribed APIs
+GET    /api/v1/subscribedapi/{id}       # Get subscribed API by ID
+POST   /api/v1/subscribedapi           # Create subscribed API
+PUT    /api/v1/subscribedapi/{id}      # Update subscribed API
+DELETE /api/v1/subscribedapi/{id}      # Delete subscribed API
+```
+
+#### Required Headers
+
+All endpoints require:
+
+- `CorrelationId`: Unique identifier for request tracing
 - `Content-Type`: application/json
-
-#### Routes Management
-
-```http
-GET    /routes            # List all routes
-GET    /routes/{id}       # Get route by ID
-POST   /routes           # Create route
-PUT    /routes/{id}      # Update route
-DELETE /routes/{id}      # Delete route
-```
-
-Request Headers:
-
-- `CorrelationId`: Required for request tracing
-- `Content-Type`: application/json
-
-#### Configuration Management
-
-```http
-POST   /configuration/refresh     # Force configuration refresh
-```
-
-Request Headers:
-
-- `CorrelationId`: Required for request tracing
+- `Authorization`: Bearer JWT token (for authenticated endpoints)
 
 ### Example: Creating a Route
 
 ```bash
 # 1. Create a cluster
-curl -X POST http://localhost:5000/api/v1/clusters \
+curl -X POST http://localhost:8000/api/v1/proxycluster \
   -H "Content-Type: application/json" \
   -H "CorrelationId: your-correlation-id" \
+  -H "Authorization: Bearer your-jwt-token" \
   -d '{
     "clusterId": "auth-service",
     "destinations": [
@@ -169,9 +226,10 @@ curl -X POST http://localhost:5000/api/v1/clusters \
   }'
 
 # 2. Create a route
-curl -X POST http://localhost:5000/api/v1/routes \
+curl -X POST http://localhost:8000/api/v1/proxyroute \
   -H "Content-Type: application/json" \
   -H "CorrelationId: your-correlation-id" \
+  -H "Authorization: Bearer your-jwt-token" \
   -d '{
     "routeId": "auth-route",
     "path": "/auth/{**catch-all}",
@@ -193,8 +251,19 @@ curl -X POST http://localhost:5000/api/v1/routes \
   }'
 
 # 3. Refresh configuration
-curl -X POST http://localhost:5000/api/v1/configuration/refresh \
-  -H "CorrelationId: your-correlation-id"
+curl -X POST http://localhost:8000/api/v1/proxyconfiguration/refresh \
+  -H "CorrelationId: your-correlation-id" \
+  -H "Authorization: Bearer your-jwt-token"
+
+# 4. Create an API product
+curl -X POST http://localhost:8000/api/v1/apiproduct \
+  -H "Content-Type: application/json" \
+  -H "CorrelationId: your-correlation-id" \
+  -H "Authorization: Bearer your-jwt-token" \
+  -d '{
+    "name": "Auth API Product",
+    "description": "Authentication and authorization services"
+  }'
 ```
 
 ### Response Formats
@@ -265,8 +334,11 @@ docker build -t blogsphere-gateway .
 
 ```bash
 docker run -d \
-  -p 5000:80 \
-  -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Database=blogsphere;Username=your_username;Password=your_password" \
+  -p 8000:80 \
+  -e ConnectionStrings__DefaultConnection="Server=host.docker.internal;Database=BlogsphereProxy;Username=admin;Password=admin" \
+  -e EventBus__Host="host.docker.internal" \
+  -e Elasticsearch__Uri="http://host.docker.internal:9200" \
+  -e Zipkin__Url="http://host.docker.internal:9411/api/v2/spans" \
   blogsphere-gateway
 ```
 
@@ -302,11 +374,13 @@ Referrer-Policy: strict-origin-when-cross-origin
 Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';
 ```
 
-### Authentication
+### Authentication & Authorization
 
-- JWT Bearer token authentication
-- Role-based access control
+- JWT Bearer token authentication with configurable authority
+- Role-based access control with `[RequirePermission]` attribute
+- API scopes for fine-grained access control
 - Subscription validation middleware
+- Identity service integration for user management
 
 ## Development
 
@@ -315,42 +389,100 @@ Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' '
 ```
 src/
 ├── Blogsphere.Api.Gateway/
-    ├── Controllers/         # API endpoints
-    ├── Data/               # Database context and repositories
-    ├── Entity/             # Domain entities
-    ├── Extensions/         # Extension methods
-    ├── Infrastructure/     # Cross-cutting concerns
-    ├── Middlewares/        # Custom middleware
-    ├── Models/             # DTOs and view models
-    └── Services/           # Business logic
+    ├── Configurations/     # Application configuration options
+    ├── Controllers/        # API endpoints (v1 versioned)
+    ├── Data/              # Database context, repositories, and migrations
+    │   ├── Configurations/ # Entity configurations
+    │   ├── Context/        # DbContext
+    │   ├── Interfaces/     # Repository interfaces
+    │   ├── Migrations/     # EF Core migrations
+    │   ├── Repositories/   # Repository implementations
+    │   ├── Seeding/        # Database seeding
+    │   └── UnitOfWork/     # Unit of work pattern
+    ├── DI/                # Dependency injection extensions
+    ├── Entity/            # Domain entities
+    ├── EventBus/          # Event bus contracts and implementations
+    ├── Extensions/        # Extension methods
+    ├── Filters/           # Custom filters (permissions, etc.)
+    ├── Infrastructure/    # Cross-cutting concerns and YARP integration
+    ├── Middlewares/       # Custom middleware
+    ├── Models/            # DTOs, requests, responses, and mappings
+    │   ├── Common/        # Common response models
+    │   ├── Constants/     # Application constants
+    │   ├── DTOs/          # Data transfer objects
+    │   ├── Enums/         # Enumerations
+    │   ├── Mappings/      # AutoMapper profiles
+    │   └── Requests/      # Request models
+    ├── Services/          # Business logic services
+    │   ├── Factory/       # Service factories
+    │   ├── Interfaces/    # Service interfaces
+    │   └── Security/      # Security services
+    ├── Swagger/           # Swagger/OpenAPI configuration and examples
+    └── Validators/        # FluentValidation validators
 ```
 
-### Adding New Routes
+### Adding New Features
 
-1. Create a cluster configuration
+#### Adding New API Endpoints
+
+1. Create controller in `Controllers/v1/`
+2. Add Swagger documentation with `[SwaggerOperation]` and `[SwaggerHeader]` attributes
+3. Implement business logic in services
+4. Add request/response models in `Models/`
+5. Add validation using FluentValidation
+6. Add AutoMapper profiles for object mapping
+
+#### Adding New Proxy Routes
+
+1. Create a cluster configuration via API
 2. Define route patterns and methods
 3. Configure rate limiting if needed
 4. Add any required transforms
 5. Test the routing behavior
 
+#### Adding New Subscriptions
+
+1. Create API products via the API product endpoints
+2. Set up subscribed APIs for specific products
+3. Create subscriptions linking users to API products
+4. Configure access permissions and rate limits
+
 ### Best Practices
 
-1. **Configuration**:
+1. **API Design**:
+
+   - Always include `[SwaggerHeader("CorrelationId")]` on all endpoints [[memory:2839113]]
+   - Use `[SwaggerOperation]` and `[SwaggerRequestExample]` attributes for documentation [[memory:2839113]]
+   - Follow RESTful conventions for endpoint naming
+   - Use proper HTTP status codes
+
+2. **Configuration**:
 
    - Use meaningful IDs for clusters and routes
    - Keep configurations focused and simple
    - Document any special routing requirements
+   - Use environment-specific configuration files
 
-2. **Security**:
+3. **Security**:
 
    - Always use HTTPS in production
    - Implement appropriate rate limiting
    - Validate and sanitize inputs
+   - Use JWT authentication for protected endpoints
+   - Implement role-based access control
 
-3. **Performance**:
+4. **Performance**:
+
    - Monitor route performance
    - Use caching where appropriate
    - Implement circuit breakers for critical services
+   - Configure appropriate connection pooling
+
+5. **Development**:
+   - Use the repository pattern for data access
+   - Implement proper logging with correlation IDs
+   - Write comprehensive unit and integration tests
+   - Use dependency injection for loose coupling
 
 ## Troubleshooting
 
@@ -369,17 +501,56 @@ src/
    - Review YARP logs for routing decisions
 
 3. **Performance Issues**:
+
    - Monitor rate limit counters
    - Check resource utilization
    - Review telemetry data
+   - Verify Event Bus connectivity (RabbitMQ)
+
+4. **Authentication Issues**:
+
+   - Verify JWT token validity
+   - Check identity authority configuration
+   - Ensure proper permissions are assigned
+   - Validate subscription status
+
+5. **Documentation Issues**:
+   - Access Scalar UI at `/scalar/v1` for modern API documentation
+   - Check Swagger UI at `/swagger` for traditional documentation
+   - Verify correlation IDs in request headers
+
+## CI/CD Pipeline
+
+The project uses Azure DevOps pipelines with the following stages:
+
+1. **Build**: Compiles the .NET project using `dotnet build` [[memory:2839082]]
+2. **Code Analysis**: Runs static code analysis
+3. **GitHub Release**: Creates releases for main branch builds
+4. **Docker Build and Push**: Builds and pushes Docker images
+
+### Pipeline Configuration
+
+The pipeline is triggered on:
+
+- **Branches**: `main`, `feature/**`, `hotfix/**`
+- **Pull Requests**: targeting `main` branch
+
+### Build Requirements
+
+- .NET 8.0 SDK
+- Ubuntu latest build agents
+- Docker for containerization
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create a feature branch (`feature/your-feature-name`)
+3. Implement your changes following the coding standards
+4. Add appropriate tests and documentation
+5. Ensure all CI checks pass
+6. Commit your changes with descriptive messages
+7. Push to your branch
+8. Create a Pull Request with detailed description
 
 ## License
 

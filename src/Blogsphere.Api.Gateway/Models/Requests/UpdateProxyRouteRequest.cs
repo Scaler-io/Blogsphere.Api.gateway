@@ -10,7 +10,7 @@ public class UpdateProxyRouteRequest
     
     public string RateLimiterPolicy { get; set; }
     
-    public Dictionary<string, string> Metadata { get; set; }
+    public bool IsActive { get; set; }
     
     public Guid? ClusterId { get; set; }
     

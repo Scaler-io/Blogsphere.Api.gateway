@@ -45,7 +45,10 @@ public class ProxyConfigSeeder(
                 {
                     ClusterId = clusterId,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
+                    Metadata = new MetaDataDto
+                    {
+                        CreatedAt = DateTime.UtcNow
+                    },
                     LoadBalancingPolicy = clusterConfig.GetValue<string>("LoadBalancingPolicy") ?? "RoundRobin",
                     HealthCheckEnabled = healthCheckEnabled,
                     HealthCheckPath = healthCheck?.GetValue<string>("Active:Path") ?? "/healthcheck",
@@ -76,7 +79,6 @@ public class ProxyConfigSeeder(
                         DestinationId = destinationId,
                         Address = address,
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
                         ClusterId = clusterDto.Id
                     };
                     clusterDto.Destinations.Add(destinationDto);
@@ -91,7 +93,6 @@ public class ProxyConfigSeeder(
                         DestinationId = "default",
                         Address = "http://localhost:8001",
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
                         ClusterId = clusterDto.Id
                     };
                     clusterDto.Destinations.Add(defaultDestinationDto);
@@ -137,7 +138,10 @@ public class ProxyConfigSeeder(
                         Id = Guid.NewGuid(),
                         ClusterId = clusterId,
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
+                        Metadata = new MetaDataDto
+                        {
+                            CreatedAt = DateTime.UtcNow
+                        },
                         LoadBalancingPolicy = "RoundRobin",
                         HealthCheckEnabled = true,
                         HealthCheckPath = "/healthcheck",
@@ -151,7 +155,6 @@ public class ProxyConfigSeeder(
                                 DestinationId = "default",
                                 Address = "http://localhost:8001",
                                 IsActive = true,
-                                CreatedAt = DateTime.UtcNow
                             }
                         ]
                     };
@@ -175,7 +178,10 @@ public class ProxyConfigSeeder(
                     Methods = routeConfig.GetSection("Match:Method").Get<string[]>() ?? ["GET"],
                     RateLimiterPolicy = routeConfig.GetValue<string>("RateLimiterPolicy"),
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
+                    Metadata = new MetaDataDto
+                    {
+                        CreatedAt = DateTime.UtcNow
+                    },
                     Headers = [],
                     Transforms = []
                 };

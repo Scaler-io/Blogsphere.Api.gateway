@@ -10,10 +10,7 @@ public class ProxyClusterDto
     public int HealthCheckInterval { get; set; }
     public int HealthCheckTimeout { get; set; }
     public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
-    public string CreatedBy { get; set; }
-    public string UpdatedBy { get; set; }
+    public MetaDataDto Metadata { get; set; }
     public ICollection<ProxyDestinationDto> Destinations { get; set; } = [];
     public ICollection<ProxyRouteDto> Routes { get; set; } = [];
 } 

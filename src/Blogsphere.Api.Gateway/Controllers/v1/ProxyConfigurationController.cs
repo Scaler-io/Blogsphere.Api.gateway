@@ -26,6 +26,6 @@ public class ProxyConfigurationController(
         _logger.Here().MethodEntered();
         _configProvider.Update();
         _logger.Here().MethodExited();
-        return Ok();
+        return NoContent();
     }
 } 

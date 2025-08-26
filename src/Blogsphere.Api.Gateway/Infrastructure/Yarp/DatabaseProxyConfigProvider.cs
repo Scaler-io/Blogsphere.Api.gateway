@@ -120,7 +120,6 @@ public class DatabaseProxyConfigProvider : IProxyConfigProvider
                                 { "PathPattern", t.PathPattern }
                             })
                             .ToList() ?? [],
-                        Metadata = route.Metadata ?? [],
                         ClusterId = route.Cluster.ClusterId,
                         RateLimiterPolicy = route.RateLimiterPolicy
                     };
