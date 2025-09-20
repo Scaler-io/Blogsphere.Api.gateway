@@ -19,6 +19,7 @@ public class SubscribedApiController(ILogger logger, IIdentityService identitySe
     [SwaggerHeader("CorrelationId", Description ="The correlation id of the request")]
     [SwaggerOperation("GetAllSubscribedApis", Summary = "Get all subscribed apis")]
     // 200
+    [SwaggerResponseExample(StatusCodes.Status200OK, typeof(SubscribedApiPaginatedResponseExample))]
     [ProducesResponseType(typeof(PaginatedResult<SubscribedApiDto>), StatusCodes.Status200OK)]
     // 401
     [SwaggerResponseExample(StatusCodes.Status401Unauthorized, typeof(UnauthorizedResponseExample))]
@@ -31,6 +32,24 @@ public class SubscribedApiController(ILogger logger, IIdentityService identitySe
     {
         Logger.Here().MethodEntered();
         var result = await _subscribedApiManageService.GetAllSubscribedApisAsync(request);
+        Logger.Here().MethodExited();
+        return OkOrFailure(result, HttpStatusCode.OK);
+    }
+
+    [HttpGet("product/{productId}")]
+    [SwaggerHeader("CorrelationId", Description ="The correlation id of the request")]
+    [SwaggerOperation("GetAllSubscribedApisByProductId", Summary = "Get all subscribed apis by product id")]
+    // 200
+    [SwaggerResponseExample(StatusCodes.Status200OK, typeof(SubscribedApiListResponseExample))]
+    [ProducesResponseType(typeof(List<SubscribedApiDto>), StatusCodes.Status200OK)]
+    // 401
+    [SwaggerResponseExample(StatusCodes.Status401Unauthorized, typeof(UnauthorizedResponseExample))]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    [RequirePermission(ApiAccess.CanViewSystemSettings, ApiScopes.GatewayRead)]
+    public async Task<IActionResult> GetAllSubscribedApisByProductId([FromRoute] Guid productId)
+    {
+        Logger.Here().MethodEntered();
+        var result = await _subscribedApiManageService.GetSubscribedApisByProductIdAsync(productId);
         Logger.Here().MethodExited();
         return OkOrFailure(result, HttpStatusCode.OK);
     }

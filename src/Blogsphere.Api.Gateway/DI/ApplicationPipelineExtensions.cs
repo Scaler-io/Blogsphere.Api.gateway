@@ -27,7 +27,7 @@ public static class ApplicationPipelineExtensions
             context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
             context.Response.Headers.Append("Content-Security-Policy", 
                 "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
-            await next();
+            await next(context);
         });
 
         app.UseCors("blogspherecors");

@@ -5,6 +5,7 @@ public class SubscriptionDto
     public Guid Id { get; set; }
     public string SubscriptionName { get; set; }
     public string SubscriptionDescription { get; set; }
+    public string SubscriptionKey { get; set; }
     public ApiProductSummary ApiProductDetails { get; set; }
     public string CreatedAt { get; set; }
     public string UpdatedAt { get; set; }

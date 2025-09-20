@@ -134,10 +134,23 @@ public class SubscribedApiManageService(
 
     public async Task<Result<List<SubscribedApiDto>>> GetSubscribedApisByProductIdAsync(Guid productId)
     {
-        var subscribedApis = await _subscribedApiRepository.AsQueryable()
+        _logger.Here().MethodEntered();
+        _logger.Here().WithApiProductId(productId)
+            .Information("Request - {0} fetching subscribed apis by product id", nameof(GetSubscribedApisByProductIdAsync));
+
+        var subscribedApis = await IncludeAllMemebers(_subscribedApiRepository.AsQueryable())
             .Where(x => x.ProductId == productId)
             .Select(x => _mapper.Map<SubscribedApiDto>(x))
             .ToListAsync();
+
+        if(subscribedApis.IsNullOrEmpty())
+        {
+            _logger.Here().WithApiProductId(productId).Information("No subscribed apis found");
+            return Result<List<SubscribedApiDto>>.Success([]);
+        }
+
+        _logger.Here().WithApiProductId(productId).Information("{0} subscribed apis found", subscribedApis.Count);
+        _logger.Here().MethodExited();
 
         return Result<List<SubscribedApiDto>>.Success(subscribedApis);
     }

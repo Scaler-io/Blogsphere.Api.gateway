@@ -35,6 +35,26 @@ public class SubscriptionController(ILogger logger, IIdentityService identitySer
         return OkOrFailure(result, HttpStatusCode.OK);
     }
 
+    [HttpGet("product/{productId}")]
+    [SwaggerHeader("CorrelationId", Description ="The correlation id of the request")]
+    [SwaggerOperation("GetAllSubscriptionsByProductId", Summary = "Get all subscriptions by product id")]
+    // 200
+    [ProducesResponseType(typeof(List<SubscriptionDto>), StatusCodes.Status200OK)]
+    // 401
+    [SwaggerResponseExample(StatusCodes.Status401Unauthorized, typeof(UnauthorizedResponseExample))]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    // 500
+    [SwaggerResponseExample(StatusCodes.Status500InternalServerError, typeof(InternalServerErrorResponseExample))]
+    [ProducesResponseType(typeof(ApiExceptionResponse), StatusCodes.Status500InternalServerError)]
+    [RequirePermission(ApiAccess.CanViewSystemSettings, ApiScopes.GatewayRead)]
+    public async Task<IActionResult> GetAllSubscriptionsByProductId([FromRoute] Guid productId)
+    {
+        Logger.Here().MethodEntered();
+        var result = await _subscriptionManageService.GetSubscriptionsByProductIdAsync(productId);
+        Logger.Here().MethodExited();
+        return OkOrFailure(result, HttpStatusCode.OK);
+    }
+
     [HttpGet("{id}")]
     [SwaggerHeader("CorrelationId", Description ="The correlation id of the request")]
     [SwaggerOperation("GetSubscriptionById", Summary = "Get a subscription by id")]

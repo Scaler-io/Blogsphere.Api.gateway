@@ -51,6 +51,28 @@ public class SubscriptionManageService(
         return Result<PaginatedResult<SubscriptionDto>>.Success(paginatedResult);
     }
 
+    public async Task<Result<List<SubscriptionDto>>> GetSubscriptionsByProductIdAsync(Guid productId)
+    {
+        _logger.Here().MethodEntered();
+        _logger.Here().WithApiProductId(productId)
+            .Information("Request - {0} fetching subscriptions by product id", nameof(GetSubscriptionsByProductIdAsync));
+
+        var subscriptions = await IncludeAllMemebers(_subscriptionRepository.AsQueryable())
+            .Where(x => x.ProductId == productId)
+            .Select(x => _mapper.Map<SubscriptionDto>(x))
+            .ToListAsync();
+
+        if(subscriptions.IsNullOrEmpty())
+        {
+            _logger.Here().WithApiProductId(productId).Information("No subscriptions found");
+            return Result<List<SubscriptionDto>>.Success([]);
+        }
+
+        _logger.Here().WithApiProductId(productId).Information("{0} subscriptions found", subscriptions.Count);
+        _logger.Here().MethodExited();
+        return Result<List<SubscriptionDto>>.Success(subscriptions);
+    }
+
     public async Task<Result<SubscriptionDto>> GetSubscriptionByIdAsync(Guid id)
     {
         _logger.Here().MethodEntered();

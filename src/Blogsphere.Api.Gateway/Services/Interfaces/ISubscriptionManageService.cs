@@ -6,5 +6,6 @@ public interface ISubscriptionManageService
     Task<Result<SubscriptionDto>> GetSubscriptionByIdAsync(Guid id);
     Task<Result<SubscriptionDto>> CreateSubscriptionAsync(CreateSubscriptionRequest request, RequestInformation requestInformation);
     Task<Result<bool>> DeleteSubscriptionAsync(Guid id);
+    Task<Result<List<SubscriptionDto>>> GetSubscriptionsByProductIdAsync(Guid productId);
     Task<Result<SubscriptionDto>> GetSubscriptionByKeyAsync(string subscriptionKey);
 }
