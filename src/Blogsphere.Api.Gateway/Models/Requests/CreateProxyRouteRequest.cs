@@ -14,6 +14,7 @@ public class CreateProxyRouteRequest
     public string[] Methods { get; set; }
     
     public string RateLimiterPolicy { get; set; }
+    public bool IsActive { get; set; }
     
     public Dictionary<string, string> Metadata { get; set; }
     

@@ -177,7 +177,7 @@ public class ProxyRouteService(
         
         // Set system properties
         dto.Id = Guid.NewGuid();
-        dto.IsActive = true;
+        dto.IsActive = request.IsActive;
         dto.Metadata = new MetaDataDto
         {
             CreatedBy = requestInfo.CurrentUser.Id,
@@ -191,7 +191,7 @@ public class ProxyRouteService(
             foreach (var header in dto.Headers)
             {
                 header.Id = Guid.NewGuid();
-                header.IsActive = true;
+                header.IsActive = request.IsActive;
                 header.Metadata = new MetaDataDto
                 {
                     CreatedBy = requestInfo.CurrentUser.Id,
@@ -207,7 +207,7 @@ public class ProxyRouteService(
             foreach (var transform in dto.Transforms)
             {
                 transform.Id = Guid.NewGuid();
-                transform.IsActive = true;
+                transform.IsActive = request.IsActive;
                 transform.Metadata = new MetaDataDto
                 {
                     CreatedBy = requestInfo.CurrentUser.Id,

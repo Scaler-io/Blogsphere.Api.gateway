@@ -91,7 +91,7 @@ public class ProxyClusterService(
 
         // Set system properties
         dto.Id = Guid.NewGuid();
-        dto.IsActive = true;
+        dto.IsActive = request.IsActive;
         dto.Metadata = new MetaDataDto
         {
             CreatedBy = requestInfo.CurrentUser.Id,
@@ -233,9 +233,10 @@ public class ProxyClusterService(
         if (dto.LoadBalancingPolicy != null) entity.LoadBalancingPolicy = dto.LoadBalancingPolicy;
         entity.HealthCheckEnabled = dto.HealthCheckEnabled;
         if (dto.HealthCheckPath != null) entity.HealthCheckPath = dto.HealthCheckPath;
-        entity.HealthCheckInterval = dto.HealthCheckInterval;
-        entity.HealthCheckTimeout = dto.HealthCheckTimeout;
+        entity.HealthCheckInterval = dto.HealthCheckInterval ?? 0;
+        entity.HealthCheckTimeout = dto.HealthCheckTimeout ?? 0;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.IsActive = dto.IsActive;
 
         // Set UpdatedBy from RequestInformation
         if (requestInfo?.CurrentUser?.Id != null)

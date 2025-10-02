@@ -2,15 +2,16 @@ public class CreateProxyClusterRequest
 {
     public string ClusterId { get; set; }
     
-    public string LoadBalancingPolicy { get; set; } = "RoundRobin";
+    public string LoadBalancingPolicy { get; set; }
     
-    public bool HealthCheckEnabled { get; set; } = true;
+    public bool IsActive { get; set; } = true;
+    public bool HealthCheckEnabled { get; set; }
     
-    public string HealthCheckPath { get; set; } = "/health";
+    public string HealthCheckPath { get; set; }
     
-    public int HealthCheckInterval { get; set; } = 30;
+    public int? HealthCheckInterval { get; set; }
     
-    public int HealthCheckTimeout { get; set; } = 10;
+    public int? HealthCheckTimeout { get; set; }
     
     public ICollection<CreateProxyDestinationRequest> Destinations { get; set; }
 } 

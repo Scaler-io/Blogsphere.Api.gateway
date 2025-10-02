@@ -7,8 +7,8 @@ public class ProxyClusterDto
     public string LoadBalancingPolicy { get; set; }
     public bool HealthCheckEnabled { get; set; }
     public string HealthCheckPath { get; set; }
-    public int HealthCheckInterval { get; set; }
-    public int HealthCheckTimeout { get; set; }
+    public int? HealthCheckInterval { get; set; }
+    public int? HealthCheckTimeout { get; set; }
     public bool IsActive { get; set; }
     public MetaDataDto Metadata { get; set; }
     public ICollection<ProxyDestinationDto> Destinations { get; set; } = [];

@@ -71,8 +71,8 @@ public static class ServiceCollectionExtensions
         {
             options.AddFixedWindowLimiter("blogsphereratelimitter", policy => 
             {
-                policy.PermitLimit = 4;
-                policy.Window = TimeSpan.FromSeconds(12);
+                policy.PermitLimit = 15;
+                policy.Window = TimeSpan.FromSeconds(15);
                 policy.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
                 policy.QueueLimit = 1;
             });        

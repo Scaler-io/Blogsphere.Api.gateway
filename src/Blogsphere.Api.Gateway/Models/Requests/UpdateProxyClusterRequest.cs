@@ -8,6 +8,8 @@ public class UpdateProxyClusterRequest
     
     public bool? HealthCheckEnabled { get; set; }
     
+    public bool IsActive { get; set; } = true;
+
     public string HealthCheckPath { get; set; }
     
     public int? HealthCheckInterval { get; set; }

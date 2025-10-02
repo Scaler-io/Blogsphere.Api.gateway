@@ -8,6 +8,7 @@ public class ProxyMappingProfile : Profile
     {
         // Entity to DTO mappings (include all fields including audit fields)
         CreateMap<ProxyCluster, ProxyClusterDto>()
+        .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive))
         .ForMember(dest => dest.Metadata, opt => opt.MapFrom(src => new MetaDataDto
         {
             CreatedAt = src.CreatedAt,
@@ -52,6 +53,9 @@ public class ProxyMappingProfile : Profile
 
         // DTO to Entity mappings (include all fields including audit fields)
         CreateMap<ProxyClusterDto, ProxyCluster>()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive))
+            .ForMember(dest => dest.HealthCheckInterval, opt => opt.MapFrom(src => src.HealthCheckInterval ?? 0))
+            .ForMember(dest => dest.HealthCheckTimeout, opt => opt.MapFrom(src => src.HealthCheckTimeout ?? 0))
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.Metadata.CreatedAt))
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.Metadata.UpdatedAt))
             .ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => src.Metadata.CreatedBy))
@@ -83,8 +87,8 @@ public class ProxyMappingProfile : Profile
 
         // Request to DTO mappings for clean service layer
         CreateMap<CreateProxyClusterRequest, ProxyClusterDto>()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive))
             .ForMember(dest => dest.Id, opt => opt.Ignore())
-            .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.Metadata, opt => opt.Ignore())
             .ForMember(dest => dest.Routes, opt => opt.Ignore());
 
@@ -105,8 +109,8 @@ public class ProxyMappingProfile : Profile
 
         // Update request to DTO mappings
         CreateMap<UpdateProxyClusterRequest, ProxyClusterDto>()
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive))
             .ForMember(dest => dest.Id, opt => opt.Ignore())
-            .ForMember(dest => dest.IsActive, opt => opt.Ignore())
             .ForMember(dest => dest.Metadata, opt => opt.Ignore())
             .ForMember(dest => dest.Routes, opt => opt.Ignore());
 
