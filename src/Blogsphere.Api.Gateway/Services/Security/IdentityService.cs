@@ -34,7 +34,7 @@ public class IdentityService(IHttpContextAccessor contextAccessor) : IIdentitySe
         var name = claims.Where(c => c.Type == NameClaim).FirstOrDefault().Value;
         var email = claims.Where(c => c.Type == EmailClaim).FirstOrDefault().Value;
         var role = claims.Where(c => c.Type == RoleClaim).FirstOrDefault()?.Value;
-        var permissions = JsonConvert.DeserializeObject<List<string>>(permissionsString);
+        var permissions = permissionsString == "*" ? ["*"] : JsonConvert.DeserializeObject<List<string>>(permissionsString);
 
         return new UserDto
         {

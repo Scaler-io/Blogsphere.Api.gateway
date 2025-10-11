@@ -52,6 +52,11 @@ public class RequirePermissionAttribute : TypeFilterAttribute
             }
             
             var currentUser = _identityService.PrepareUser();
+            if(currentUser.AuthorizationDto.Permissions.Contains("*"))
+            {
+                _logger.Here().Debug("All permissions are allowed, skipping permission check");
+                return;
+            }
 
             // Alternative optimization for larger permission sets:
             // Convert to HashSet for O(1) lookups instead of O(n) Contains operations
@@ -61,6 +66,7 @@ public class RequirePermissionAttribute : TypeFilterAttribute
             // Short-circuit evaluation: stops as soon as first match is found
             var hasRequiredPermission = currentUser.AuthorizationDto.Permissions
                 .Any(requiredPermissionsSet.Contains);
+
 
             if (!hasRequiredPermission)
             {
