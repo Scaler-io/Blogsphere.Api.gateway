@@ -88,6 +88,10 @@ public static class ServiceCollectionExtensions
                 .AddMassTransitInstrumentation()
                 .AddZipkinExporter(options => options.Endpoint = new Uri(configuration["Zipkin:Url"] ?? 
                     throw new InvalidOperationException("Zipkin:Url configuration is missing")))
+                .AddJaegerExporter(options => {
+                    options.AgentHost = configuration["Jaeger:AgentHost"];
+                    options.AgentPort = int.Parse(configuration["Jaeger:AgentPort"]);
+                })
             );
 
         // Configure EventBus

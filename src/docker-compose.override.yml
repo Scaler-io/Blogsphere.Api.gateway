@@ -20,6 +20,8 @@ services:
       - ElasticSearch__Uri=http://elasticsearch:9200
       - "ConnectionStrings__DefaultConnection=Server=gatewaydb;Database=BlogsphereProxy;Username=admin;Password=admin"
       - "Zipkin__Url=http://zipkin:9411/api/v2/spans"
+      - "Jaeger__AgentHost=jaeger"
+      - "Jaeger__AgentPort=6831"
       - "ApiDescription=Proxy API Gateway"
       - "ApiOriginHost=localhost:8000"
       - "IdentityGroupAccess__Authority=http://host.docker.internal:5000"
