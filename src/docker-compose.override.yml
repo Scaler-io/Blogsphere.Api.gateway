@@ -25,7 +25,7 @@ services:
       - "ApiDescription=Proxy API Gateway"
       - "ApiOriginHost=localhost:8000"
       - "IdentityGroupAccess__Authority=http://host.docker.internal:5000"
-      - "IdentityGroupAccess__Audience=blogsphere.api.gateway"
+      - "IdentityGroupAccess__Audience=blogsphere.apigateway.api"
       - "AllowedHosts=*"
       - "EventBus__Host=rabbitmq"
       - "EventBus__Username=guest"
