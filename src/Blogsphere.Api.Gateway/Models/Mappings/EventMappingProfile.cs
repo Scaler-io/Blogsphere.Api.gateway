@@ -26,13 +26,15 @@ public class EventMappingProfile : Profile
         CreateMap<ProxyCluster, ApiClusterDeleted>();
 
         CreateMap<ProxyRoute, ApiRouteCreated>()
+        .ForMember(d => d.Cluster, opt => opt.MapFrom(s => s.Cluster.ClusterId))
         .ForMember(d => d.TransformCount, opt => opt.MapFrom(s => s.Transforms.Count))
         .ForMember(d => d.RateLimitterPolicy, opt => opt.MapFrom(s => s.RateLimiterPolicy))
         .ForMember(d => d.Status, opt => opt.MapFrom(s => s.IsActive ? "Active" : "Inactive"))
         .ForMember(d => d.CreatedAt, opt => opt.MapFrom(s => s.CreatedAt))
         .ForMember(d => d.LastUpdatedAt, opt => opt.MapFrom(s => s.UpdatedAt));
-        
+
         CreateMap<ProxyRoute, ApiRouteUpdated>()
+        .ForMember(d => d.Cluster, opt => opt.MapFrom(s => s.Cluster.ClusterId))
         .ForMember(d => d.TransformCount, opt => opt.MapFrom(s => s.Transforms.Count))
         .ForMember(d => d.RateLimitterPolicy, opt => opt.MapFrom(s => s.RateLimiterPolicy))
         .ForMember(d => d.Status, opt => opt.MapFrom(s => s.IsActive ? "Active" : "Inactive"))

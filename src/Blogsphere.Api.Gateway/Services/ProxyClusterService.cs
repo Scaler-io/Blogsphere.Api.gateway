@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AutoMapper;
 using Contracts.Events;
 using Microsoft.EntityFrameworkCore;
@@ -328,7 +329,9 @@ public class ProxyClusterService(
     public async Task<Result<bool>> DeleteAsync(Guid id, RequestInformation requestInfo)
     {
         _logger.Here().MethodEntered();
-        var entity = await _repository.GetByIdAsync(id);
+        
+        var includes = new Expression<Func<ProxyCluster, object>>[] { c => c.Routes };
+        var entity = await _repository.GetByIdAsync(id, includes: includes);
         if (entity == null)
         {
             _logger.Here().Warning("Cluster with ID {Id} not found for deletion", id);
@@ -340,6 +343,8 @@ public class ProxyClusterService(
         await _publishServiceFactory.CreatePublishServiceAsync<ProxyCluster, ApiClusterDeleted>()
         .PublishAsync(entity, requestInfo.CorrelationId);
 
+        await PublishClusterRoutesDeleteEventAsync(entity, requestInfo);
+
         await _unitOfWork.SaveChangesAsync();
 
         _logger.Here().Information("Deleted cluster with ID {Id}", id);
@@ -347,7 +352,16 @@ public class ProxyClusterService(
         return Result<bool>.Success(true);
     }
 
-
+    private async Task PublishClusterRoutesDeleteEventAsync(ProxyCluster entity, RequestInformation requestInfo)
+    {
+        var routes = entity.Routes.Where(r => r.IsActive).ToList();
+        foreach (var route in routes)
+        {
+            await _publishServiceFactory.CreatePublishServiceAsync<ProxyRoute, ApiRouteDeleted>()
+            .PublishAsync(route, requestInfo.CorrelationId);
+        }
+    }
+    
     // Override to include nested relationships for routes
     private static IQueryable<ProxyCluster> IncludeAllRelationships(IQueryable<ProxyCluster> query)
     {
